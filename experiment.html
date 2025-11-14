@@ -485,12 +485,7 @@
                 <h2>실험 완료!</h2>
                 <div class="instruction">
                     <p>실험에 참여해 주셔서 감사합니다.</p>
-                    <p>결과를 자동으로 저장하고 있습니다...</p>
-                </div>
-                
-                <div class="upload-status" id="upload-status">
-                    <div class="loading"></div>
-                    <p style="margin-top: 10px;">결과 업로드 중...</p>
+                    <p>아래 버튼을 눌러 결과 파일을 다운로드하고, 구글 폼에 업로드해주세요.</p>
                 </div>
                 
                 <div class="result-card">
@@ -517,19 +512,13 @@
                     </div>
                 </div>
                 
-                <button class="btn-primary hidden" id="btn-download-backup">백업 다운로드</button>
+                <button class="btn-primary" id="btn-download">결과 파일 다운로드</button>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURATION - Replace with your repository details
-        var GITHUB_CONFIG = {
-            owner: 'meilleur777',  // Your GitHub username
-            repo: 'Testing_Experiemnt',  // Your repository name
-            branch: 'main',  // Branch name
-            token: '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'  // GitHub Personal Access Token
-        };
+        // CONFIGURATION - Not needed for download version
         
         // Global variables
         var participantData = {
@@ -580,7 +569,7 @@
             document.getElementById('btn-finish-calib').addEventListener('click', finishCalibration);
             document.getElementById('btn-start-exp').addEventListener('click', startMainExperiment);
             document.getElementById('btn-continue').addEventListener('click', continueToSecondExperiment);
-            document.getElementById('btn-download-backup').addEventListener('click', downloadResults);
+            document.getElementById('btn-download').addEventListener('click', downloadResults);
         });
         
         function showScreen(screenId) {
@@ -902,81 +891,9 @@
                 document.getElementById('result-adaptive-time').textContent = Math.round(avgTime) + ' ms';
                 document.getElementById('result-adaptive-error').textContent = errorRate.toFixed(1) + '%';
             }
-            
-            // Auto-upload results to GitHub
-            uploadResultsToGitHub();
         }
         
-        // Upload results to GitHub
-        function uploadResultsToGitHub() {
-            var results = {
-                participant: {
-                    name: participantData.name,
-                    studentId: participantData.studentId,
-                    handedness: participantData.handedness,
-                    timestamp: participantData.timestamp
-                },
-                calibration: {
-                    reachablePoints: participantData.reachableZone.length,
-                    points: participantData.reachableZone
-                },
-                experiments: participantData.experiments.map(function(exp) {
-                    var validTrials = exp.data.filter(function(t) { return !t.error; });
-                    return {
-                        condition: exp.condition,
-                        order: exp.order,
-                        avgCompletionTime: validTrials.reduce(function(sum, t) { return sum + t.completionTime; }, 0) / validTrials.length,
-                        errorRate: exp.data.filter(function(t) { return t.error; }).length / exp.data.length,
-                        trials: exp.data
-                    };
-                })
-            };
-            
-            var fileName = 'results/result_' + participantData.studentId + '_' + Date.now() + '.json';
-            var content = JSON.stringify(results, null, 2);
-            var contentBase64 = btoa(unescape(encodeURIComponent(content)));
-            
-            var uploadStatus = document.getElementById('upload-status');
-            uploadStatus.className = 'upload-status uploading';
-            uploadStatus.innerHTML = '<div class="loading"></div><p style="margin-top: 10px;">결과 업로드 중...</p>';
-            
-            // GitHub API request
-            var apiUrl = 'https://api.github.com/repos/' + GITHUB_CONFIG.owner + '/' + GITHUB_CONFIG.repo + '/contents/' + fileName;
-            
-            fetch(apiUrl, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': 'token ' + GITHUB_CONFIG.token,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message: 'Add experiment result for ' + participantData.studentId,
-                    content: contentBase64,
-                    branch: GITHUB_CONFIG.branch
-                })
-            })
-            .then(function(response) {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    throw new Error('Upload failed: ' + response.status);
-                }
-            })
-            .then(function(data) {
-                uploadStatus.className = 'upload-status success';
-                uploadStatus.innerHTML = '<p style="color: #10b981; font-weight: 600;">✓ 결과가 성공적으로 저장되었습니다!</p><p style="margin-top: 5px; font-size: 14px;">실험에 참여해 주셔서 감사합니다.</p>';
-                showAlert('결과가 자동으로 저장되었습니다!', 'success');
-            })
-            .catch(function(error) {
-                console.error('Upload error:', error);
-                uploadStatus.className = 'upload-status error';
-                uploadStatus.innerHTML = '<p style="color: #ef4444; font-weight: 600;">⚠ 자동 업로드에 실패했습니다</p><p style="margin-top: 5px; font-size: 14px;">아래 버튼을 눌러 수동으로 다운로드해주세요.</p>';
-                document.getElementById('btn-download-backup').classList.remove('hidden');
-                showAlert('자동 저장에 실패했습니다. 백업 다운로드 버튼을 사용해주세요.', 'error');
-            });
-        }
-        
-        // Backup download function
+        // Download results function
         function downloadResults() {
             var results = {
                 participant: {
@@ -1016,7 +933,7 @@
                 URL.revokeObjectURL(url);
             }, 100);
             
-            showAlert('백업 파일이 다운로드되었습니다.', 'success');
+            showAlert('결과 파일이 다운로드되었습니다. 구글 폼에 업로드해주세요.', 'success');
         }
     </script>
 </body>
