@@ -13,7 +13,7 @@
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
-        }  
+        }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
@@ -565,7 +565,7 @@
         
         function nextToCalibration() {
             if (!participantData.handedness) {
-                alert('사용 손을 선택해주세요.');
+                showAlert('사용 손을 선택해주세요.', 'error');
                 return;
             }
             showScreen('screen-calib-intro');
@@ -628,7 +628,7 @@
         
         function finishCalibration() {
             if (calibrationPoints.length < 5) {
-                alert('최소 5개 이상의 버튼을 터치해주세요.');
+                showAlert('최소 5개 이상의 버튼을 터치해주세요.', 'error');
                 return;
             }
             
@@ -881,6 +881,9 @@
             a.href = url;
             a.download = 'result_' + participantData.studentId + '_' + Date.now() + '.json';
             
+            // Add download attribute to prompt save dialog
+            a.setAttribute('download', 'result_' + participantData.studentId + '_' + Date.now() + '.json');
+            
             // Safari compatibility: trigger click differently
             document.body.appendChild(a);
             a.click();
@@ -890,7 +893,7 @@
                 URL.revokeObjectURL(url);
             }, 100);
             
-            alert('결과 파일이 다운로드되었습니다. 구글 폼에 업로드해주세요.');
+            showAlert('결과 파일 다운로드를 시작합니다. 저장 위치를 선택해주세요.', 'success');
         }
     </script>
 </body>
