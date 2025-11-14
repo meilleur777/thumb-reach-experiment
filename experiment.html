@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Thumb Reach Experiment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            touch-action: manipulation;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container {
+            max-width: 100vw;
+            min-height: 100vh;
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: #2563eb;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .screen {
+            display: none;
+        }
+        
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 0;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .btn-primary:active {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #2563eb;
+            border: 2px solid #2563eb;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 0;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .btn-secondary:active {
+            background: #eff6ff;
+        }
+        
+        .input-group {
+            margin: 15px 0;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .hand-selection {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .hand-btn {
+            flex: 1;
+            padding: 40px 20px;
+            border: 3px solid #ddd;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .hand-btn:active {
+            transform: scale(0.95);
+            background: #eff6ff;
+        }
+        
+        .hand-btn.selected {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+        
+        .hand-btn .emoji {
+            font-size: 60px;
+            margin-bottom: 10px;
+        }
+        
+        .hand-btn .text {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .instruction {
+            background: #eff6ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+        
+        .instruction h3 {
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+        
+        .experiment-area {
+            position: relative;
+            flex: 1;
+            background: #fafafa;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 10px 0;
+            min-height: 500px;
+            touch-action: none;
+        }
+        
+        .target-btn {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .target-btn:active {
+            transform: scale(0.9);
+        }
+        
+        .target-btn.success {
+            background: #10b981;
+        }
+        
+        .target-btn.error {
+            background: #ef4444;
+        }
+        
+        .progress {
+            background: #e5e7eb;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-bar {
+            background: #2563eb;
+            height: 100%;
+            transition: width 0.3s;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        
+        .result-card {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .result-card h3 {
+            color: #2563eb;
+            margin-bottom: 15px;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .result-row:last-child {
+            border-bottom: none;
+        }
+        
+        .countdown {
+            font-size: 72px;
+            font-weight: bold;
+            color: #2563eb;
+            text-align: center;
+            margin: 50px 0;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .alert-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ef4444;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            font-weight: 600;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .alert-box.success {
+            background: #10b981;
+        }
+        
+        .alert-box.info {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Thumb-Adaptive Button UI Experiment</h1>
+            <p>엄지 도달 범위 기반 적응형 UI 실험</p>
+        </div>
+        
+        <div class="content">
+            <!-- Screen 1: Welcome & Info -->
+            <div class="screen active" id="screen-welcome">
+                <h2>실험 참여를 환영합니다</h2>
+                <div class="instruction">
+                    <h3>실험 안내</h3>
+                    <p>본 실험은 스마트폰에서 한 손 엄지 조작 시 버튼 배치에 따른 효율성을 측정합니다.</p>
+                    <p style="margin-top: 10px;">• 소요 시간: 약 10-15분</p>
+                    <p>• 세로 모드로 진행됩니다</p>
+                    <p>• 편안한 자세로 참여해주세요</p>
+                </div>
+                
+                <div class="input-group">
+                    <label>이름</label>
+                    <input type="text" id="input-name" placeholder="이름을 입력하세요">
+                </div>
+                
+                <div class="input-group">
+                    <label>학번</label>
+                    <input type="text" id="input-studentid" placeholder="학번을 입력하세요">
+                </div>
+                
+                <button class="btn-primary" id="btn-start">시작하기</button>
+            </div>
+            
+            <!-- Screen 2: Hand Selection -->
+            <div class="screen" id="screen-hand">
+                <h2>사용 손 선택</h2>
+                <div class="instruction">
+                    <p>실험 동안 주로 사용할 손을 선택해주세요.</p>
+                </div>
+                
+                <div class="hand-selection">
+                    <div class="hand-btn" id="hand-left">
+                        <div class="emoji">🤚</div>
+                        <div class="text">왼손</div>
+                    </div>
+                    <div class="hand-btn" id="hand-right">
+                        <div class="emoji">🖐️</div>
+                        <div class="text">오른손</div>
+                    </div>
+                </div>
+                
+                <button class="btn-primary hidden" id="btn-hand-next">다음</button>
+            </div>
+            
+            <!-- Screen 3: Calibration Instructions -->
+            <div class="screen" id="screen-calib-intro">
+                <h2>엄지 도달 범위 측정</h2>
+                <div class="instruction">
+                    <h3>측정 방법</h3>
+                    <p>1. 화면에 표시되는 버튼을 순서대로 터치합니다</p>
+                    <p>2. 선택한 손의 엄지손가락만 사용합니다</p>
+                    <p>3. 손목을 움직이지 않고 편안하게 도달할 수 있는 버튼만 터치합니다</p>
+                    <p>4. 도달하기 어려운 버튼은 건너뛰어도 됩니다</p>
+                </div>
+                
+                <button class="btn-primary" id="btn-start-calib">측정 시작</button>
+            </div>
+            
+            <!-- Screen 4: Calibration -->
+            <div class="screen" id="screen-calibration">
+                <h2>도달 가능한 버튼을 터치하세요</h2>
+                <div class="progress">
+                    <div class="progress-bar" id="calib-progress"></div>
+                </div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-label">진행률</div>
+                        <div class="stat-value" id="calib-count">0/25</div>
+                    </div>
+                </div>
+                <div class="experiment-area" id="calibration-area"></div>
+                <button class="btn-secondary" id="btn-finish-calib">측정 완료</button>
+            </div>
+            
+            <!-- Screen 5: Experiment Instructions -->
+            <div class="screen" id="screen-exp-intro">
+                <h2>본 실험 안내</h2>
+                <div class="instruction">
+                    <h3>실험 방법</h3>
+                    <p>1. 두 가지 조건(Fixed UI / Adaptive UI)에서 동일한 과제를 수행합니다</p>
+                    <p>2. 화면에 나타나는 버튼을 최대한 빠르고 정확하게 터치합니다</p>
+                    <p>3. 각 조건마다 20번의 시도가 있습니다</p>
+                    <p>4. 두 조건 사이에 1분의 휴식 시간이 있습니다</p>
+                </div>
+                
+                <button class="btn-primary" id="btn-start-exp">실험 시작</button>
+            </div>
+            
+            <!-- Screen 6: Experiment (Fixed/Adaptive) -->
+            <div class="screen" id="screen-experiment">
+                <h2 id="exp-title">Fixed UI 실험</h2>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-label">진행</div>
+                        <div class="stat-value" id="exp-progress">0/20</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">시간 (ms)</div>
+                        <div class="stat-value" id="exp-time">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">오류</div>
+                        <div class="stat-value" id="exp-errors">0</div>
+                    </div>
+                </div>
+                <div class="experiment-area" id="experiment-area"></div>
+            </div>
+            
+            <!-- Screen 7: Rest -->
+            <div class="screen" id="screen-rest">
+                <h2>휴식 시간</h2>
+                <div class="instruction">
+                    <p>첫 번째 실험이 완료되었습니다.</p>
+                    <p>1분간 휴식 후 두 번째 실험을 진행합니다.</p>
+                </div>
+                <div class="countdown" id="rest-countdown">60</div>
+                <button class="btn-primary hidden" id="btn-continue">다음 실험 시작</button>
+            </div>
+            
+            <!-- Screen 8: Results -->
+            <div class="screen" id="screen-results">
+                <h2>실험 완료!</h2>
+                <div class="instruction">
+                    <p>실험에 참여해 주셔서 감사합니다.</p>
+                    <p>아래 버튼을 눌러 결과 파일을 다운로드하고, 구글 폼에 업로드해주세요.</p>
+                </div>
+                
+                <div class="result-card">
+                    <h3>Fixed UI 결과</h3>
+                    <div class="result-row">
+                        <span>평균 완료 시간</span>
+                        <span id="result-fixed-time">-</span>
+                    </div>
+                    <div class="result-row">
+                        <span>오류율</span>
+                        <span id="result-fixed-error">-</span>
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <h3>Adaptive UI 결과</h3>
+                    <div class="result-row">
+                        <span>평균 완료 시간</span>
+                        <span id="result-adaptive-time">-</span>
+                    </div>
+                    <div class="result-row">
+                        <span>오류율</span>
+                        <span id="result-adaptive-error">-</span>
+                    </div>
+                </div>
+                
+                <button class="btn-primary" id="btn-download">결과 파일 다운로드</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        var participantData = {
+            name: '',
+            studentId: '',
+            handedness: '',
+            reachableZone: [],
+            experiments: []
+        };
+        
+        var currentScreen = 'screen-welcome';
+        var calibrationPoints = [];
+        var experimentOrder = [];
+        var currentExperimentIndex = 0;
+        var currentTrial = 0;
+        var trialStartTime = 0;
+        var currentCondition = '';
+        var experimentData = [];
+        var restInterval = null;
+        var areaClickHandler = null;
+        
+        // Alert replacement function
+        function showAlert(message, type) {
+            type = type || 'error';
+            var alertBox = document.createElement('div');
+            alertBox.className = 'alert-box ' + type;
+            alertBox.textContent = message;
+            document.body.appendChild(alertBox);
+            
+            setTimeout(function() {
+                alertBox.style.opacity = '0';
+                alertBox.style.transition = 'opacity 0.3s';
+                setTimeout(function() {
+                    document.body.removeChild(alertBox);
+                }, 300);
+            }, 3000);
+        }
+        
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('btn-start').addEventListener('click', startExperiment);
+            document.getElementById('hand-left').addEventListener('click', function() { selectHand('left'); });
+            document.getElementById('hand-right').addEventListener('click', function() { selectHand('right'); });
+            document.getElementById('btn-hand-next').addEventListener('click', nextToCalibration);
+            document.getElementById('btn-start-calib').addEventListener('click', startCalibration);
+            document.getElementById('btn-finish-calib').addEventListener('click', finishCalibration);
+            document.getElementById('btn-start-exp').addEventListener('click', startMainExperiment);
+            document.getElementById('btn-continue').addEventListener('click', continueToSecondExperiment);
+            document.getElementById('btn-download').addEventListener('click', downloadResults);
+        });
+        
+        function showScreen(screenId) {
+            var screens = document.querySelectorAll('.screen');
+            for (var i = 0; i < screens.length; i++) {
+                screens[i].classList.remove('active');
+            }
+            document.getElementById(screenId).classList.add('active');
+            currentScreen = screenId;
+        }
+        
+        function startExperiment() {
+            var name = document.getElementById('input-name').value.trim();
+            var studentId = document.getElementById('input-studentid').value.trim();
+            
+            if (!name || !studentId) {
+                showAlert('이름과 학번을 입력해주세요.', 'error');
+                return;
+            }
+            
+            participantData.name = name;
+            participantData.studentId = studentId;
+            participantData.timestamp = new Date().toISOString();
+            
+            showScreen('screen-hand');
+        }
+        
+        function selectHand(hand) {
+            participantData.handedness = hand;
+            var buttons = document.querySelectorAll('.hand-btn');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('selected');
+            }
+            document.getElementById('hand-' + hand).classList.add('selected');
+            document.getElementById('btn-hand-next').classList.remove('hidden');
+        }
+        
+        function nextToCalibration() {
+            if (!participantData.handedness) {
+                alert('사용 손을 선택해주세요.');
+                return;
+            }
+            showScreen('screen-calib-intro');
+        }
+        
+        function startCalibration() {
+            showScreen('screen-calibration');
+            generateCalibrationGrid();
+        }
+        
+        function generateCalibrationGrid() {
+            var area = document.getElementById('calibration-area');
+            area.innerHTML = '';
+            calibrationPoints = [];
+            
+            var rows = 5;
+            var cols = 5;
+            var areaWidth = area.clientWidth;
+            var areaHeight = area.clientHeight;
+            
+            for (var i = 0; i < rows; i++) {
+                for (var j = 0; j < cols; j++) {
+                    var btn = document.createElement('button');
+                    btn.className = 'target-btn';
+                    btn.textContent = i * cols + j + 1;
+                    
+                    var x = (j + 0.5) * (areaWidth / cols) - 30;
+                    var y = (i + 0.5) * (areaHeight / rows) - 30;
+                    
+                    btn.style.left = x + 'px';
+                    btn.style.top = y + 'px';
+                    
+                    btn.dataset.x = x;
+                    btn.dataset.y = y;
+                    
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!this.classList.contains('success')) {
+                            this.classList.add('success');
+                            calibrationPoints.push({
+                                x: parseFloat(this.dataset.x),
+                                y: parseFloat(this.dataset.y),
+                                reachable: true
+                            });
+                            updateCalibrationProgress();
+                        }
+                    });
+                    
+                    area.appendChild(btn);
+                }
+            }
+        }
+        
+        function updateCalibrationProgress() {
+            var count = calibrationPoints.length;
+            document.getElementById('calib-count').textContent = count + '/25';
+            document.getElementById('calib-progress').style.width = (count / 25 * 100) + '%';
+        }
+        
+        function finishCalibration() {
+            if (calibrationPoints.length < 5) {
+                alert('최소 5개 이상의 버튼을 터치해주세요.');
+                return;
+            }
+            
+            participantData.reachableZone = calibrationPoints;
+            
+            // Randomize experiment order (counterbalancing)
+            experimentOrder = Math.random() < 0.5 ? ['fixed', 'adaptive'] : ['adaptive', 'fixed'];
+            
+            showScreen('screen-exp-intro');
+        }
+        
+        function startMainExperiment() {
+            currentExperimentIndex = 0;
+            startCondition(experimentOrder[0]);
+        }
+        
+        function startCondition(condition) {
+            currentCondition = condition;
+            currentTrial = 0;
+            experimentData = [];
+            
+            document.getElementById('exp-title').textContent = 
+                (condition === 'fixed' ? 'Fixed UI' : 'Adaptive UI') + ' 실험';
+            
+            showScreen('screen-experiment');
+            startTrial();
+        }
+        
+        function startTrial() {
+            if (currentTrial >= 20) {
+                finishCondition();
+                return;
+            }
+            
+            var area = document.getElementById('experiment-area');
+            area.innerHTML = '';
+            
+            // Remove previous event listener
+            if (areaClickHandler) {
+                area.removeEventListener('click', areaClickHandler);
+            }
+            
+            // Generate button position
+            var position = generateButtonPosition(currentCondition);
+            
+            var btn = document.createElement('button');
+            btn.className = 'target-btn';
+            btn.textContent = '●';
+            btn.style.left = position.x + 'px';
+            btn.style.top = position.y + 'px';
+            
+            trialStartTime = Date.now();
+            
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var completionTime = Date.now() - trialStartTime;
+                experimentData.push({
+                    trial: currentTrial + 1,
+                    position: position,
+                    completionTime: completionTime,
+                    error: false
+                });
+                
+                this.classList.add('success');
+                var self = this;
+                setTimeout(function() {
+                    currentTrial++;
+                    updateExperimentStats();
+                    startTrial();
+                }, 300);
+            });
+            
+            // Wrong area click detection
+            areaClickHandler = function(e) {
+                if (e.target === area) {
+                    e.preventDefault();
+                    experimentData.push({
+                        trial: currentTrial + 1,
+                        position: position,
+                        completionTime: Date.now() - trialStartTime,
+                        error: true
+                    });
+                    currentTrial++;
+                    updateExperimentStats();
+                    startTrial();
+                }
+            };
+            area.addEventListener('click', areaClickHandler);
+            
+            area.appendChild(btn);
+            updateExperimentStats();
+        }
+        
+        function generateButtonPosition(condition) {
+            var area = document.getElementById('experiment-area');
+            var areaWidth = area.clientWidth;
+            var areaHeight = area.clientHeight;
+            
+            if (condition === 'fixed') {
+                // Random position
+                var positions = [-2, 0, 2];
+                var pos = positions[Math.floor(Math.random() * positions.length)];
+                
+                var x, y;
+                if (pos === -2) { // Top
+                    x = Math.random() * (areaWidth - 60);
+                    y = Math.random() * (areaHeight * 0.3);
+                } else if (pos === 0) { // Middle
+                    x = Math.random() * (areaWidth - 60);
+                    y = areaHeight * 0.35 + Math.random() * (areaHeight * 0.3);
+                } else { // Bottom
+                    x = Math.random() * (areaWidth - 60);
+                    y = areaHeight * 0.7 + Math.random() * (areaHeight * 0.25);
+                }
+                
+                return {x: x, y: y, zone: pos};
+            } else {
+                // Adaptive - use reachable zone
+                if (participantData.reachableZone.length === 0) {
+                    return generateButtonPosition('fixed');
+                }
+                
+                var reachable = participantData.reachableZone;
+                var point = reachable[Math.floor(Math.random() * reachable.length)];
+                
+                // Add some randomness around the reachable point
+                var x = Math.max(0, Math.min(areaWidth - 60, point.x + (Math.random() - 0.5) * 40));
+                var y = Math.max(0, Math.min(areaHeight - 60, point.y + (Math.random() - 0.5) * 40));
+                
+                return {x: x, y: y, zone: 'adaptive'};
+            }
+        }
+        
+        function updateExperimentStats() {
+            document.getElementById('exp-progress').textContent = currentTrial + '/20';
+            
+            var validTrials = experimentData.filter(function(t) { return !t.error; });
+            var avgTime = validTrials.length > 0 
+                ? Math.round(validTrials.reduce(function(sum, t) { return sum + t.completionTime; }, 0) / validTrials.length)
+                : 0;
+            
+            var errorCount = experimentData.filter(function(t) { return t.error; }).length;
+            
+            document.getElementById('exp-time').textContent = avgTime;
+            document.getElementById('exp-errors').textContent = errorCount;
+        }
+        
+        function finishCondition() {
+            participantData.experiments.push({
+                condition: currentCondition,
+                order: currentExperimentIndex + 1,
+                data: experimentData
+            });
+            
+            currentExperimentIndex++;
+            
+            if (currentExperimentIndex < experimentOrder.length) {
+                showScreen('screen-rest');
+                startRestTimer();
+            } else {
+                showResults();
+            }
+        }
+        
+        function startRestTimer() {
+            var timeLeft = 60;
+            document.getElementById('rest-countdown').textContent = timeLeft;
+            
+            if (restInterval) {
+                clearInterval(restInterval);
+            }
+            
+            restInterval = setInterval(function() {
+                timeLeft--;
+                document.getElementById('rest-countdown').textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(restInterval);
+                    document.getElementById('btn-continue').classList.remove('hidden');
+                }
+            }, 1000);
+        }
+        
+        function continueToSecondExperiment() {
+            startCondition(experimentOrder[1]);
+        }
+        
+        function showResults() {
+            showScreen('screen-results');
+            
+            var fixedExp = null;
+            var adaptiveExp = null;
+            
+            for (var i = 0; i < participantData.experiments.length; i++) {
+                if (participantData.experiments[i].condition === 'fixed') {
+                    fixedExp = participantData.experiments[i];
+                } else if (participantData.experiments[i].condition === 'adaptive') {
+                    adaptiveExp = participantData.experiments[i];
+                }
+            }
+            
+            if (fixedExp) {
+                var validTrials = fixedExp.data.filter(function(t) { return !t.error; });
+                var avgTime = validTrials.reduce(function(sum, t) { return sum + t.completionTime; }, 0) / validTrials.length;
+                var errorRate = (fixedExp.data.filter(function(t) { return t.error; }).length / fixedExp.data.length * 100);
+                
+                document.getElementById('result-fixed-time').textContent = Math.round(avgTime) + ' ms';
+                document.getElementById('result-fixed-error').textContent = errorRate.toFixed(1) + '%';
+            }
+            
+            if (adaptiveExp) {
+                var validTrials = adaptiveExp.data.filter(function(t) { return !t.error; });
+                var avgTime = validTrials.reduce(function(sum, t) { return sum + t.completionTime; }, 0) / validTrials.length;
+                var errorRate = (adaptiveExp.data.filter(function(t) { return t.error; }).length / adaptiveExp.data.length * 100);
+                
+                document.getElementById('result-adaptive-time').textContent = Math.round(avgTime) + ' ms';
+                document.getElementById('result-adaptive-error').textContent = errorRate.toFixed(1) + '%';
+            }
+        }
+        
+        function downloadResults() {
+            var results = {
+                participant: {
+                    name: participantData.name,
+                    studentId: participantData.studentId,
+                    handedness: participantData.handedness,
+                    timestamp: participantData.timestamp
+                },
+                calibration: {
+                    reachablePoints: participantData.reachableZone.length,
+                    points: participantData.reachableZone
+                },
+                experiments: participantData.experiments.map(function(exp) {
+                    var validTrials = exp.data.filter(function(t) { return !t.error; });
+                    return {
+                        condition: exp.condition,
+                        order: exp.order,
+                        avgCompletionTime: validTrials.reduce(function(sum, t) { return sum + t.completionTime; }, 0) / validTrials.length,
+                        errorRate: exp.data.filter(function(t) { return t.error; }).length / exp.data.length,
+                        trials: exp.data
+                    };
+                })
+            };
+            
+            var dataStr = JSON.stringify(results, null, 2);
+            var blob = new Blob([dataStr], {type: 'application/json'});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'result_' + participantData.studentId + '_' + Date.now() + '.json';
+            
+            // Safari compatibility: trigger click differently
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            setTimeout(function() {
+                URL.revokeObjectURL(url);
+            }, 100);
+            
+            alert('결과 파일이 다운로드되었습니다. 구글 폼에 업로드해주세요.');
+        }
+    </script>
+</body>
+</html>
