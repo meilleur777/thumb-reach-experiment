@@ -368,13 +368,6 @@
                     <p style="margin-top: 10px;">• 소요 시간: 약 3-5분 (테스트 버전)</p>
                     <p>• 세로 모드로 진행됩니다</p>
                     <p>• 편안한 자세로 참여해주세요</p>
-                    <p style="margin-top: 15px; padding: 10px; background: #fef3c7; border-radius: 6px; font-size: 14px;">
-                        <strong>📥 결과 파일 안내:</strong><br>
-                        실험 완료 후 결과 파일이 자동으로 <strong>다운로드 폴더</strong>에 저장됩니다.<br>
-                        • iPhone: 파일 앱 → 다운로드<br>
-                        • Android: 다운로드 폴더<br>
-                        • Mac: Finder → 다운로드
-                    </p>
                 </div>
                 
                 <div class="input-group">
@@ -416,10 +409,11 @@
                 <h2>엄지 도달 범위 측정</h2>
                 <div class="instruction">
                     <h3>측정 방법</h3>
-                    <p>1. 화면에 표시되는 버튼을 순서대로 터치합니다</p>
+                    <p>1. 화면에 손가락을 대고 <strong>그리듯이</strong> 움직여주세요</p>
                     <p>2. 선택한 손의 엄지손가락만 사용합니다</p>
-                    <p>3. 손목을 움직이지 않고 편안하게 도달할 수 있는 버튼만 터치합니다</p>
-                    <p>4. 도달하기 어려운 버튼은 건너뛰어도 됩니다</p>
+                    <p>3. 손목을 움직이지 않고 편안하게 도달할 수 있는 영역을 모두 칠해주세요</p>
+                    <p>4. 도달 가능한 영역의 경계를 따라 그리면 더 정확합니다</p>
+                    <p>5. 파란색으로 칠해지는 영역이 측정 영역입니다</p>
                 </div>
                 
                 <button class="btn-primary" id="btn-start-calib">측정 시작</button>
@@ -427,18 +421,24 @@
             
             <!-- Screen 4: Calibration -->
             <div class="screen" id="screen-calibration">
-                <h2>도달 가능한 버튼을 터치하세요</h2>
-                <p style="font-size: 14px; color: #6b7280; margin-bottom: 10px;">테스트 버전: 3x3 그리드</p>
+                <h2>도달 가능한 영역을 그려주세요</h2>
+                <p style="font-size: 14px; color: #6b7280; margin-bottom: 10px;">손가락을 대고 움직여 파란색으로 칠해주세요</p>
                 <div class="progress">
                     <div class="progress-bar" id="calib-progress"></div>
                 </div>
                 <div class="stats">
                     <div class="stat-item">
-                        <div class="stat-label">진행률</div>
-                        <div class="stat-value" id="calib-count">0/9</div>
+                        <div class="stat-label">터치 횟수</div>
+                        <div class="stat-value" id="calib-count">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">목표</div>
+                        <div class="stat-value">10+</div>
                     </div>
                 </div>
-                <div class="experiment-area" id="calibration-area"></div>
+                <div class="experiment-area" id="calibration-area" style="position: relative; overflow: hidden;">
+                    <canvas id="calibration-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+                </div>
                 <button class="btn-secondary" id="btn-finish-calib">측정 완료</button>
             </div>
             
@@ -531,7 +531,7 @@
 
     <script>
         // CONFIGURATION - Google Apps Script Web App URL
-        var UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbxqjBY6HzoTmuJwlYNgp_E-3Q4RjSCtJzQi_0VBk4RLUAWjttGH1SPcEHg_KVMsQ3Ju/exec';  // You'll get this after setup
+        var UPLOAD_URL = 'YOUR_GOOGLE_SCRIPT_URL_HERE';  // You'll get this after setup
         
         // Global variables
         var participantData = {
@@ -630,63 +630,115 @@
         
         function startCalibration() {
             showScreen('screen-calibration');
-            generateCalibrationGrid();
+            setupContinuousCalibration();
         }
         
-        function generateCalibrationGrid() {
+        function setupContinuousCalibration() {
             var area = document.getElementById('calibration-area');
-            area.innerHTML = '';
+            var canvas = document.getElementById('calibration-canvas');
+            var ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = area.clientWidth;
+            canvas.height = area.clientHeight;
+            
             calibrationPoints = [];
+            var isDrawing = false;
             
-            var rows = 3;  // Reduced from 5 to 3 for testing
-            var cols = 3;  // Reduced from 5 to 3 for testing
-            var areaWidth = area.clientWidth;
-            var areaHeight = area.clientHeight;
+            // Clear canvas with semi-transparent background
+            ctx.fillStyle = 'rgba(250, 250, 250, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            for (var i = 0; i < rows; i++) {
-                for (var j = 0; j < cols; j++) {
-                    var btn = document.createElement('button');
-                    btn.className = 'target-btn';
-                    btn.textContent = i * cols + j + 1;
-                    
-                    var x = (j + 0.5) * (areaWidth / cols) - 30;
-                    var y = (i + 0.5) * (areaHeight / rows) - 30;
-                    
-                    btn.style.left = x + 'px';
-                    btn.style.top = y + 'px';
-                    
-                    btn.dataset.x = x;
-                    btn.dataset.y = y;
-                    
-                    btn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (!this.classList.contains('success')) {
-                            this.classList.add('success');
-                            calibrationPoints.push({
-                                x: parseFloat(this.dataset.x),
-                                y: parseFloat(this.dataset.y),
-                                reachable: true
-                            });
-                            updateCalibrationProgress();
-                        }
-                    });
-                    
-                    area.appendChild(btn);
-                }
-            }
+            // Handle touch/click events
+            var startDrawing = function(e) {
+                e.preventDefault();
+                isDrawing = true;
+                handleTouch(e);
+            };
+            
+            var stopDrawing = function(e) {
+                e.preventDefault();
+                isDrawing = false;
+            };
+            
+            var handleTouch = function(e) {
+                if (!isDrawing && e.type !== 'touchstart' && e.type !== 'mousedown') return;
+                e.preventDefault();
+                
+                var rect = area.getBoundingClientRect();
+                var touch = e.touches ? e.touches[0] : e;
+                var x = touch.clientX - rect.left;
+                var y = touch.clientY - rect.top;
+                
+                // Record point
+                calibrationPoints.push({
+                    x: x,
+                    y: y,
+                    reachable: true,
+                    timestamp: Date.now()
+                });
+                
+                // Draw continuous area
+                drawReachableArea(ctx, x, y);
+                
+                // Update progress
+                updateCalibrationProgress();
+            };
+            
+            // Add event listeners
+            area.addEventListener('touchstart', startDrawing);
+            area.addEventListener('touchmove', handleTouch);
+            area.addEventListener('touchend', stopDrawing);
+            area.addEventListener('mousedown', startDrawing);
+            area.addEventListener('mousemove', handleTouch);
+            area.addEventListener('mouseup', stopDrawing);
+            area.addEventListener('mouseleave', stopDrawing);
+            
+            // Store handlers for cleanup
+            area._handlers = {
+                start: startDrawing,
+                move: handleTouch,
+                end: stopDrawing
+            };
+        }
+        
+        function drawReachableArea(ctx, x, y) {
+            // Draw a filled circle with gradient
+            var gradient = ctx.createRadialGradient(x, y, 0, x, y, 30);
+            gradient.addColorStop(0, 'rgba(37, 99, 235, 0.4)');
+            gradient.addColorStop(1, 'rgba(37, 99, 235, 0.1)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(x, y, 30, 0, 2 * Math.PI);
+            ctx.fill();
         }
         
         function updateCalibrationProgress() {
             var count = calibrationPoints.length;
-            document.getElementById('calib-count').textContent = count + '/9';
-            document.getElementById('calib-progress').style.width = (count / 9 * 100) + '%';
+            document.getElementById('calib-count').textContent = count;
+            
+            // Progress bar fills up to 20 touches (after that it's 100%)
+            var progress = Math.min(count / 20 * 100, 100);
+            document.getElementById('calib-progress').style.width = progress + '%';
         }
         
         function finishCalibration() {
-            if (calibrationPoints.length < 3) {
-                showAlert('최소 3개 이상의 버튼을 터치해주세요.', 'error');
+            if (calibrationPoints.length < 10) {
+                showAlert('최소 10개 이상의 지점을 터치해주세요.', 'error');
                 return;
+            }
+            
+            // Clean up event listeners
+            var area = document.getElementById('calibration-area');
+            if (area._handlers) {
+                area.removeEventListener('touchstart', area._handlers.start);
+                area.removeEventListener('touchmove', area._handlers.move);
+                area.removeEventListener('touchend', area._handlers.end);
+                area.removeEventListener('mousedown', area._handlers.start);
+                area.removeEventListener('mousemove', area._handlers.move);
+                area.removeEventListener('mouseup', area._handlers.end);
+                area.removeEventListener('mouseleave', area._handlers.end);
             }
             
             participantData.reachableZone = calibrationPoints;
