@@ -2,8 +2,10 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Thumb Reach Experiment</title>
+    <meta name="viewport" content="width=393, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Thumb Reach Experiment - iPhone 16</title>
     <style>
         * {
             margin: 0;
@@ -16,35 +18,42 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Arial, sans-serif;
+            background: #000;
             touch-action: manipulation;
-            overflow-x: hidden;
+            overflow: hidden;
             -webkit-font-smoothing: antialiased;
+            width: 393px;
+            height: 852px;
+            position: fixed;
         }
         
         .container {
-            max-width: 100vw;
-            min-height: 100vh;
+            width: 393px;
+            height: 852px;
             background: white;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+            position: relative;
         }
         
         .header {
             background: #2563eb;
             color: white;
-            padding: 20px;
+            padding: 50px 20px 15px 20px;
             text-align: center;
+            flex-shrink: 0;
         }
         
         .header h1 {
-            font-size: 20px;
-            margin-bottom: 5px;
+            font-size: 18px;
+            margin-bottom: 4px;
+            font-weight: 600;
         }
         
         .header p {
-            font-size: 14px;
+            font-size: 13px;
             opacity: 0.9;
         }
         
@@ -53,10 +62,13 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .screen {
             display: none;
+            height: 100%;
         }
         
         .screen.active {
@@ -65,17 +77,26 @@
             flex: 1;
         }
         
+        h2 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #1f2937;
+        }
+        
         .btn-primary {
             background: #2563eb;
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 16px;
-            border-radius: 8px;
+            padding: 16px 30px;
+            font-size: 17px;
+            border-radius: 12px;
             cursor: pointer;
             margin: 10px 0;
             -webkit-appearance: none;
             appearance: none;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
         }
         
         .btn-primary:active {
@@ -91,13 +112,14 @@
             background: white;
             color: #2563eb;
             border: 2px solid #2563eb;
-            padding: 15px 30px;
-            font-size: 16px;
-            border-radius: 8px;
+            padding: 16px 30px;
+            font-size: 17px;
+            border-radius: 12px;
             cursor: pointer;
             margin: 10px 0;
             -webkit-appearance: none;
             appearance: none;
+            font-weight: 600;
         }
         
         .btn-secondary:active {
@@ -105,7 +127,7 @@
         }
         
         .input-group {
-            margin: 15px 0;
+            margin: 12px 0;
         }
         
         .input-group label {
@@ -113,29 +135,30 @@
             margin-bottom: 8px;
             font-weight: 600;
             color: #333;
+            font-size: 15px;
         }
         
         .input-group input {
             width: 100%;
-            padding: 12px;
+            padding: 14px 16px;
             border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 10px;
+            font-size: 17px;
             -webkit-appearance: none;
             appearance: none;
         }
         
         .hand-selection {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             margin: 20px 0;
         }
         
         .hand-btn {
             flex: 1;
-            padding: 40px 20px;
+            padding: 50px 20px;
             border: 3px solid #ddd;
-            border-radius: 12px;
+            border-radius: 16px;
             background: white;
             cursor: pointer;
             text-align: center;
@@ -153,26 +176,32 @@
         }
         
         .hand-btn .emoji {
-            font-size: 60px;
-            margin-bottom: 10px;
+            font-size: 70px;
+            margin-bottom: 12px;
         }
         
         .hand-btn .text {
-            font-size: 18px;
+            font-size: 19px;
             font-weight: 600;
         }
         
         .instruction {
             background: #eff6ff;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
+            padding: 18px;
+            border-radius: 12px;
+            margin: 15px 0;
             line-height: 1.6;
+            font-size: 15px;
         }
         
         .instruction h3 {
             color: #2563eb;
             margin-bottom: 10px;
+            font-size: 17px;
+        }
+        
+        .instruction p {
+            margin: 8px 0;
         }
         
         .experiment-area {
@@ -180,9 +209,10 @@
             flex: 1;
             background: #fafafa;
             border: 2px solid #ddd;
-            border-radius: 8px;
+            border-radius: 12px;
             margin: 10px 0;
-            min-height: 500px;
+            min-height: 450px;
+            max-height: 550px;
             touch-action: none;
         }
         
@@ -206,6 +236,69 @@
             justify-content: center;
         }
         
+        .search-container {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 2.5px solid #2563eb;
+            border-radius: 28px;
+            padding: 10px 14px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            min-width: 240px;
+        }
+        
+        .search-input {
+            border: none;
+            outline: none;
+            font-size: 17px;
+            padding: 6px 10px;
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+        }
+        
+        .search-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-left: 8px;
+            font-size: 20px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .search-btn:active {
+            background: #1d4ed8;
+            transform: scale(0.95);
+        }
+        
+        .target-text {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            padding: 16px 35px;
+            border-radius: 16px;
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 10px;
+            color: #1f2937;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+            border: 2px solid #fbbf24;
+        }
+        
         .target-btn:active {
             transform: scale(0.9);
         }
@@ -220,8 +313,8 @@
         
         .progress {
             background: #e5e7eb;
-            height: 8px;
-            border-radius: 4px;
+            height: 6px;
+            border-radius: 3px;
             overflow: hidden;
             margin: 10px 0;
         }
@@ -235,9 +328,9 @@
         .stats {
             display: flex;
             justify-content: space-around;
-            padding: 15px;
+            padding: 15px 10px;
             background: #f9fafb;
-            border-radius: 8px;
+            border-radius: 12px;
             margin: 10px 0;
         }
         
@@ -246,27 +339,29 @@
         }
         
         .stat-label {
-            font-size: 12px;
+            font-size: 11px;
             color: #6b7280;
             margin-bottom: 5px;
+            font-weight: 500;
         }
         
         .stat-value {
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 22px;
+            font-weight: 700;
             color: #1f2937;
         }
         
         .result-card {
             background: #f9fafb;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 10px 0;
+            padding: 18px;
+            border-radius: 12px;
+            margin: 8px 0;
         }
         
         .result-card h3 {
             color: #2563eb;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            font-size: 17px;
         }
         
         .result-row {
@@ -274,6 +369,7 @@
             justify-content: space-between;
             padding: 10px 0;
             border-bottom: 1px solid #e5e7eb;
+            font-size: 15px;
         }
         
         .result-row:last-child {
@@ -281,11 +377,11 @@
         }
         
         .countdown {
-            font-size: 72px;
-            font-weight: bold;
+            font-size: 80px;
+            font-weight: 700;
             color: #2563eb;
             text-align: center;
-            margin: 50px 0;
+            margin: 60px 0;
         }
         
         .hidden {
@@ -332,10 +428,11 @@
         
         .upload-status {
             background: #eff6ff;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
+            padding: 16px;
+            border-radius: 12px;
+            margin: 12px 0;
             text-align: center;
+            font-size: 15px;
         }
         
         .upload-status.uploading {
@@ -349,13 +446,33 @@
         .upload-status.error {
             background: #fee2e2;
         }
+        
+        /* iPhone 16 Safe Area */
+        @supports (padding: env(safe-area-inset-top)) {
+            .header {
+                padding-top: calc(env(safe-area-inset-top) + 15px);
+            }
+            
+            .content {
+                padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+            }
+        }
+        
+        /* Prevent overscroll */
+        body {
+            overscroll-behavior: none;
+        }
+        
+        .container {
+            overscroll-behavior: contain;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Thumb-Adaptive Button UI Experiment</h1>
-            <p>엄지 도달 범위 기반 적응형 UI 실험</p>
+            <h1>Thumb-Adaptive Search UI Experiment</h1>
+            <p>iPhone 16 최적화 버전</p>
         </div>
         
         <div class="content">
@@ -364,9 +481,9 @@
                 <h2>실험 참여를 환영합니다</h2>
                 <div class="instruction">
                     <h3>실험 안내</h3>
-                    <p>본 실험은 스마트폰에서 한 손 엄지 조작 시 버튼 배치에 따른 효율성을 측정합니다.</p>
-                    <p style="margin-top: 10px;">• 소요 시간: 약 3-5분 (테스트 버전)</p>
-                    <p>• 세로 모드로 진행됩니다</p>
+                    <p>본 실험은 iPhone 16에서 한 손 엄지 조작 시 검색창 배치에 따른 효율성을 측정합니다.</p>
+                    <p style="margin-top: 8px;">• 소요 시간: 약 3-5분</p>
+                    <p>• 세로 모드 전용</p>
                     <p>• 편안한 자세로 참여해주세요</p>
                 </div>
                 
@@ -406,12 +523,12 @@
             
             <!-- Screen 3: Calibration Instructions -->
             <div class="screen" id="screen-calib-intro">
-                <h2>엄지 도달 범위 측정</h2>
+                <h2>터치 가능한 영역 측정</h2>
                 <div class="instruction">
                     <h3>측정 방법</h3>
                     <p>1. 화면에 손가락을 대고 <strong>그리듯이</strong> 움직여주세요</p>
                     <p>2. 선택한 손의 엄지손가락만 사용합니다</p>
-                    <p>3. 손목을 움직이지 않고 편안하게 도달할 수 있는 영역을 모두 칠해주세요</p>
+                    <p>3. <strong>손목을 움직이지 않고</strong> 편안하게 도달할 수 있는 모든 연속적인 영역을 칠해주세요</p>
                     <p>4. 도달 가능한 영역의 경계를 따라 그리면 더 정확합니다</p>
                     <p>5. 파란색으로 칠해지는 영역이 측정 영역입니다</p>
                 </div>
@@ -447,10 +564,13 @@
                 <h2>본 실험 안내</h2>
                 <div class="instruction">
                     <h3>실험 방법</h3>
-                    <p>1. 두 가지 조건(Fixed UI / Adaptive UI)에서 동일한 과제를 수행합니다</p>
-                    <p>2. 화면에 나타나는 버튼을 최대한 빠르고 정확하게 터치합니다</p>
-                    <p>3. 각 조건마다 <strong>5번</strong>의 시도가 있습니다 (테스트 버전)</p>
-                    <p>4. 두 조건 사이에 3초의 휴식 시간이 있습니다</p>
+                    <p>1. 두 가지 조건에서 동일한 과제를 수행합니다</p>
+                    <p style="margin-left: 20px;">• <strong>조건 1:</strong> 검색창이 원래 위치에 고정</p>
+                    <p style="margin-left: 20px;">• <strong>조건 2:</strong> 검색창이 터치 가능한 영역으로 자동 이동</p>
+                    <p style="margin-top: 10px;">2. 화면에 표시되는 <strong>3글자 영문</strong>을 검색창에 입력하고 검색 버튼을 누릅니다</p>
+                    <p>3. 최대한 빠르고 정확하게 입력해주세요</p>
+                    <p>4. 각 조건마다 <strong>5번</strong>의 시도가 있습니다 (테스트 버전)</p>
+                    <p>5. 두 조건의 순서는 랜덤으로 배치됩니다</p>
                 </div>
                 
                 <button class="btn-primary" id="btn-start-exp">실험 시작</button>
@@ -458,7 +578,8 @@
             
             <!-- Screen 6: Experiment (Fixed/Adaptive) -->
             <div class="screen" id="screen-experiment">
-                <h2 id="exp-title">Fixed UI 실험</h2>
+                <h2 id="exp-title">실험 진행 중</h2>
+                <p id="exp-condition-desc" style="font-size: 14px; color: #6b7280; text-align: center; margin-bottom: 10px;"></p>
                 <div class="stats">
                     <div class="stat-item">
                         <div class="stat-label">진행</div>
@@ -501,7 +622,7 @@
                 </div>
                 
                 <div class="result-card">
-                    <h3>Fixed UI 결과</h3>
+                    <h3>조건 1: 원래 위치 (Fixed)</h3>
                     <div class="result-row">
                         <span>평균 완료 시간</span>
                         <span id="result-fixed-time">-</span>
@@ -513,7 +634,7 @@
                 </div>
                 
                 <div class="result-card">
-                    <h3>Adaptive UI 결과</h3>
+                    <h3>조건 2: 자동 이동 (Adaptive)</h3>
                     <div class="result-row">
                         <span>평균 완료 시간</span>
                         <span id="result-adaptive-time">-</span>
@@ -531,7 +652,7 @@
 
     <script>
         // CONFIGURATION - Google Apps Script Web App URL
-        var UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbxqjBY6HzoTmuJwlYNgp_E-3Q4RjSCtJzQi_0VBk4RLUAWjttGH1SPcEHg_KVMsQ3Ju/exec';  // You'll get this after setup
+        var UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbxqjBY6HzoTmuJwlYNgp_E-3Q4RjSCtJzQi_0VBk4RLUAWjttGH1SPcEHg_KVMsQ3Ju/exec';
         
         // Global variables
         var participantData = {
@@ -550,6 +671,8 @@
         var trialStartTime = 0;
         var currentCondition = '';
         var experimentData = [];
+        var currentTargetString = '';
+        var searchInputStartTime = 0;
         var restInterval = null;
         var areaClickHandler = null;
         
@@ -759,8 +882,19 @@
             currentTrial = 0;
             experimentData = [];
             
-            document.getElementById('exp-title').textContent = 
-                (condition === 'fixed' ? 'Fixed UI' : 'Adaptive UI') + ' 실험';
+            var title = '';
+            var desc = '';
+            
+            if (condition === 'fixed') {
+                title = '조건 1: 원래 위치';
+                desc = '검색창이 원래 위치에 고정되어 있습니다';
+            } else {
+                title = '조건 2: 자동 이동';
+                desc = '검색창이 터치 가능한 영역으로 이동합니다';
+            }
+            
+            document.getElementById('exp-title').textContent = title;
+            document.getElementById('exp-condition-desc').textContent = desc;
             
             showScreen('screen-experiment');
             startTrial();
@@ -780,92 +914,158 @@
                 area.removeEventListener('click', areaClickHandler);
             }
             
-            // Generate button position
-            var position = generateButtonPosition(currentCondition);
+            // Generate random 3-letter string
+            currentTargetString = generateRandomString(3);
             
-            var btn = document.createElement('button');
-            btn.className = 'target-btn';
-            btn.textContent = '●';
-            btn.style.left = position.x + 'px';
-            btn.style.top = position.y + 'px';
+            // Display target string
+            var targetDisplay = document.createElement('div');
+            targetDisplay.className = 'target-text';
+            targetDisplay.textContent = currentTargetString;
+            area.appendChild(targetDisplay);
             
+            // Generate search bar position
+            var position = generateSearchBarPosition(currentCondition);
+            
+            // Create search container
+            var searchContainer = document.createElement('div');
+            searchContainer.className = 'search-container';
+            searchContainer.style.left = position.x + 'px';
+            searchContainer.style.top = position.y + 'px';
+            
+            // Create input field
+            var input = document.createElement('input');
+            input.className = 'search-input';
+            input.type = 'text';
+            input.placeholder = '입력...';
+            input.maxLength = 3;
+            
+            // Create search button
+            var searchBtn = document.createElement('button');
+            searchBtn.className = 'search-btn';
+            searchBtn.textContent = '🔍';
+            
+            searchContainer.appendChild(input);
+            searchContainer.appendChild(searchBtn);
+            area.appendChild(searchContainer);
+            
+            // Start timing when user focuses on input
             trialStartTime = Date.now();
+            searchInputStartTime = 0;
             
-            btn.addEventListener('click', function(e) {
+            input.addEventListener('focus', function() {
+                if (searchInputStartTime === 0) {
+                    searchInputStartTime = Date.now();
+                }
+            });
+            
+            // Handle search button click
+            var handleSearch = function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                
                 var completionTime = Date.now() - trialStartTime;
+                var userInput = input.value.toLowerCase();
+                var isCorrect = userInput === currentTargetString.toLowerCase();
+                
                 experimentData.push({
                     trial: currentTrial + 1,
+                    targetString: currentTargetString,
+                    userInput: userInput,
                     position: position,
                     completionTime: completionTime,
-                    error: false
+                    error: !isCorrect
                 });
                 
-                this.classList.add('success');
+                // Visual feedback
+                if (isCorrect) {
+                    searchContainer.style.borderColor = '#10b981';
+                    searchContainer.style.background = '#d1fae5';
+                } else {
+                    searchContainer.style.borderColor = '#ef4444';
+                    searchContainer.style.background = '#fee2e2';
+                }
+                
                 setTimeout(function() {
                     currentTrial++;
                     updateExperimentStats();
                     startTrial();
-                }, 300);
+                }, 500);
+            };
+            
+            searchBtn.addEventListener('click', handleSearch);
+            
+            // Also allow Enter key
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleSearch(e);
+                }
             });
             
-            // Wrong area click detection
-            areaClickHandler = function(e) {
-                if (e.target === area) {
-                    e.preventDefault();
-                    experimentData.push({
-                        trial: currentTrial + 1,
-                        position: position,
-                        completionTime: Date.now() - trialStartTime,
-                        error: true
-                    });
-                    currentTrial++;
-                    updateExperimentStats();
-                    startTrial();
-                }
-            };
-            area.addEventListener('click', areaClickHandler);
+            // Focus input automatically
+            setTimeout(function() {
+                input.focus();
+            }, 100);
             
-            area.appendChild(btn);
             updateExperimentStats();
         }
         
-        function generateButtonPosition(condition) {
+        function generateRandomString(length) {
+            var chars = 'abcdefghijklmnopqrstuvwxyz';
+            var result = '';
+            for (var i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+        
+        function generateSearchBarPosition(condition) {
             var area = document.getElementById('experiment-area');
             var areaWidth = area.clientWidth;
             var areaHeight = area.clientHeight;
             
+            // Leave space for target text at top
+            var topMargin = 80;
+            var searchBarWidth = 240;
+            var searchBarHeight = 50;
+            
             if (condition === 'fixed') {
-                // Random position
-                var positions = [-2, 0, 2];
-                var pos = positions[Math.floor(Math.random() * positions.length)];
+                // Fixed position: Top center, right below target text
+                var x = (areaWidth - searchBarWidth) / 2;
+                var y = topMargin + 10; // 10px below target text
                 
-                var x, y;
-                if (pos === -2) { // Top
-                    x = Math.random() * (areaWidth - 60);
-                    y = Math.random() * (areaHeight * 0.3);
-                } else if (pos === 0) { // Middle
-                    x = Math.random() * (areaWidth - 60);
-                    y = areaHeight * 0.35 + Math.random() * (areaHeight * 0.3);
-                } else { // Bottom
-                    x = Math.random() * (areaWidth - 60);
-                    y = areaHeight * 0.7 + Math.random() * (areaHeight * 0.25);
-                }
-                
-                return {x: x, y: y, zone: pos};
+                return {x: x, y: y, zone: 'top-fixed'};
             } else {
-                // Adaptive - use reachable zone
+                // Adaptive - position within reachable zone
                 if (participantData.reachableZone.length === 0) {
-                    return generateButtonPosition('fixed');
+                    return generateSearchBarPosition('fixed');
                 }
                 
+                // Find a point in reachable zone that has enough space for search bar
                 var reachable = participantData.reachableZone;
-                var point = reachable[Math.floor(Math.random() * reachable.length)];
+                var attempts = 0;
+                var maxAttempts = 50;
                 
-                // Add some randomness around the reachable point
-                var x = Math.max(0, Math.min(areaWidth - 60, point.x + (Math.random() - 0.5) * 40));
-                var y = Math.max(0, Math.min(areaHeight - 60, point.y + (Math.random() - 0.5) * 40));
+                while (attempts < maxAttempts) {
+                    var point = reachable[Math.floor(Math.random() * reachable.length)];
+                    
+                    // Check if search bar fits
+                    var x = Math.max(10, Math.min(areaWidth - searchBarWidth - 10, point.x - searchBarWidth / 2));
+                    var y = Math.max(topMargin, Math.min(areaHeight - searchBarHeight - 10, point.y - searchBarHeight / 2));
+                    
+                    // Make sure it's not too close to target text
+                    if (y > topMargin + 60) {
+                        return {x: x, y: y, zone: 'adaptive'};
+                    }
+                    
+                    attempts++;
+                }
+                
+                // Fallback: use center of reachable zone
+                var avgX = reachable.reduce(function(sum, p) { return sum + p.x; }, 0) / reachable.length;
+                var avgY = reachable.reduce(function(sum, p) { return sum + p.y; }, 0) / reachable.length;
+                
+                var x = Math.max(10, Math.min(areaWidth - searchBarWidth - 10, avgX - searchBarWidth / 2));
+                var y = Math.max(topMargin + 60, Math.min(areaHeight - searchBarHeight - 10, avgY - searchBarHeight / 2));
                 
                 return {x: x, y: y, zone: 'adaptive'};
             }
