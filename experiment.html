@@ -784,6 +784,24 @@
             document.getElementById('btn-start-exp').addEventListener('click', startMainExperiment);
             document.getElementById('btn-continue').addEventListener('click', continueToSecondExperiment);
             document.getElementById('btn-download').addEventListener('click', downloadResults);
+            
+            // Prevent viewport resize when keyboard opens
+            window.addEventListener('resize', function() {
+                // Prevent body scroll when keyboard appears
+                document.body.style.height = '852px';
+            });
+            
+            // Detect keyboard open/close
+            var originalHeight = window.innerHeight;
+            window.addEventListener('focusin', function() {
+                document.body.classList.add('keyboard-open');
+            });
+            
+            window.addEventListener('focusout', function() {
+                document.body.classList.remove('keyboard-open');
+                // Force scroll to top
+                window.scrollTo(0, 0);
+            });
         });
         
         function showScreen(screenId) {
@@ -1147,25 +1165,36 @@
             var areaWidth = area.clientWidth;
             var areaHeight = area.clientHeight;
             
-            // Leave space for target text at top
+            // Leave space for target text at top and keyboard at bottom
             var topMargin = 80;
+            var bottomMargin = 320; // Reserve space for keyboard (approx 300-350px)
             var searchBarWidth = 240;
             var searchBarHeight = 50;
+            var availableHeight = areaHeight - topMargin - bottomMargin;
             
             if (condition === 'fixed') {
                 // Fixed position: Top center, right below target text
+                // Make sure it's above keyboard area
                 var x = (areaWidth - searchBarWidth) / 2;
                 var y = topMargin + 10; // 10px below target text
                 
                 return {x: x, y: y, zone: 'top-fixed'};
             } else {
-                // Adaptive - position within reachable zone
+                // Adaptive - position within reachable zone, but above keyboard
                 if (participantData.reachableZone.length === 0) {
                     return generateSearchBarPosition('fixed');
                 }
                 
-                // Find a point in reachable zone that has enough space for search bar
-                var reachable = participantData.reachableZone;
+                // Filter reachable points to only those above keyboard area
+                var reachable = participantData.reachableZone.filter(function(point) {
+                    return point.y < (areaHeight - bottomMargin);
+                });
+                
+                if (reachable.length === 0) {
+                    // Fallback to fixed position if no points above keyboard
+                    return generateSearchBarPosition('fixed');
+                }
+                
                 var attempts = 0;
                 var maxAttempts = 50;
                 
@@ -1174,22 +1203,22 @@
                     
                     // Check if search bar fits
                     var x = Math.max(10, Math.min(areaWidth - searchBarWidth - 10, point.x - searchBarWidth / 2));
-                    var y = Math.max(topMargin, Math.min(areaHeight - searchBarHeight - 10, point.y - searchBarHeight / 2));
+                    var y = Math.max(topMargin, Math.min(areaHeight - bottomMargin - searchBarHeight, point.y - searchBarHeight / 2));
                     
-                    // Make sure it's not too close to target text
-                    if (y > topMargin + 60) {
+                    // Make sure it's not too close to target text and is above keyboard
+                    if (y > topMargin + 60 && y < (areaHeight - bottomMargin - searchBarHeight)) {
                         return {x: x, y: y, zone: 'adaptive'};
                     }
                     
                     attempts++;
                 }
                 
-                // Fallback: use center of reachable zone
+                // Fallback: use center of reachable zone above keyboard
                 var avgX = reachable.reduce(function(sum, p) { return sum + p.x; }, 0) / reachable.length;
                 var avgY = reachable.reduce(function(sum, p) { return sum + p.y; }, 0) / reachable.length;
                 
                 var x = Math.max(10, Math.min(areaWidth - searchBarWidth - 10, avgX - searchBarWidth / 2));
-                var y = Math.max(topMargin + 60, Math.min(areaHeight - searchBarHeight - 10, avgY - searchBarHeight / 2));
+                var y = Math.max(topMargin + 60, Math.min(areaHeight - bottomMargin - searchBarHeight - 20, avgY - searchBarHeight / 2));
                 
                 return {x: x, y: y, zone: 'adaptive'};
             }
