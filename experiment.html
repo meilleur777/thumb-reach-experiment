@@ -1183,24 +1183,21 @@
         
         function generateSearchBarPosition(condition) {
             var area = document.getElementById('experiment-area');
-            var areaWidth = area.clientWidth; // 393px
             var areaHeight = area.clientHeight; // 852px
             
-            var searchBarWidth = 373; // Full width minus 20px padding
             var searchBarHeight = 50;
-            
             var keyboardHeight = 336; // iPhone keyboard height
             var searchBarY = areaHeight - keyboardHeight - searchBarHeight - 10; // 10px gap above keyboard
             
             if (condition === 'fixed') {
-                // Fixed position: Top center
-                var x = (areaWidth - searchBarWidth) / 2; // 10px from edges
+                // Fixed position: Top, full width (393px)
+                var x = 0; // No left margin
                 var y = 10; // 10px from top
                 
                 return {x: x, y: y, zone: 'top-fixed'};
             } else {
-                // Adaptive: Just above keyboard, full width
-                var x = (areaWidth - searchBarWidth) / 2; // 10px from edges
+                // Adaptive: Just above keyboard, full width (393px)
+                var x = 0; // No left margin
                 var y = searchBarY; // Just above keyboard
                 
                 return {x: x, y: y, zone: 'above-keyboard'};
