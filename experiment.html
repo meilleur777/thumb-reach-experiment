@@ -1096,26 +1096,33 @@
                     searchInputStartTime = Date.now();
                 }
                 
-                // Multiple attempts to open keyboard on iOS
-                setTimeout(function() {
-                    input.focus();
-                    input.click();
-                }, 0);
+                // Directly focus without setTimeout for better Safari compatibility
+                input.focus();
             };
             
-            searchBtn.addEventListener('click', openKeyboard);
+            // Use both click and touchend for maximum compatibility
+            searchBtn.addEventListener('click', openKeyboard, {passive: false});
+            
+            searchBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, {passive: false});
+            
             searchBtn.addEventListener('touchend', function(e) {
                 e.preventDefault();
-                openKeyboard();
-            });
+                e.stopPropagation();
+                openKeyboard(e);
+            }, {passive: false});
             
             // Prevent input from being directly tapped (only via button)
             input.addEventListener('touchstart', function(e) {
                 if (!keyboardOpened) {
                     e.preventDefault();
                     e.stopPropagation();
+                    // If user taps input directly, treat it like button tap
+                    openKeyboard();
                 }
-            });
+            }, {passive: false});
             
             // Input focus: Start typing timer
             input.addEventListener('focus', function() {
