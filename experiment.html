@@ -337,10 +337,10 @@
         }
         
         .target-text {
-            position: fixed; /* Changed from absolute to fixed */
-            top: 70px; /* Positioned below search bar instead of center */
+            position: fixed;
+            top: 70px; /* Positioned below search bar */
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%); /* Only center horizontally, not vertically */
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
             padding: 20px 40px;
             border-radius: 20px;
