@@ -1549,6 +1549,8 @@
                 
                 // If still no points, fall back to calculating position on circle at specific angle
                 if (validBorderPoints.length === 0) {
+                    console.warn('No valid border points found, using calculated position');
+                    
                     // Generate a random angle within the allowed range
                     var randomAngle;
                     if (handedness === 'right') {
@@ -1565,12 +1567,18 @@
                         randomAngle = minAngle + Math.random() * (maxAngle - minAngle);
                     }
                     
-                    var borderX = circleCenter.x + radius * Math.cos(randomAngle);
-                    var borderY = circleCenter.y + radius * Math.sin(randomAngle);
+                    // Use a reasonable default radius if none calculated
+                    var fallbackRadius = radius > 0 ? radius : 300;
+                    
+                    var borderX = circleCenter.x + fallbackRadius * Math.cos(randomAngle);
+                    var borderY = circleCenter.y + fallbackRadius * Math.sin(randomAngle);
                     
                     // Center button on this calculated border point
+                    // Ensure button stays within screen bounds
                     var x = Math.max(10, Math.min(areaWidth - buttonWidth - 10, borderX - buttonWidth / 2));
-                    var y = Math.max(minY, Math.min(areaHeight - buttonHeight - 10, borderY - buttonHeight / 2));
+                    var y = Math.max(10, Math.min(areaHeight - buttonHeight - 10, borderY - buttonHeight / 2));
+                    
+                    console.log('Fallback button position:', {x: x, y: y, angle: randomAngle * 180 / Math.PI});
                     
                     return {
                         x: x,
@@ -1580,7 +1588,7 @@
                         details: {
                             handedness: handedness,
                             circleCenter: circleCenter,
-                            radius: radius,
+                            radius: fallbackRadius,
                             radiusPoint: radiusPoint,
                             maxDistance: maxDistance,
                             farthestPoint: farthestPoint,
@@ -1591,8 +1599,8 @@
                             allowedAngleRange: handedness === 'right' ? '180-270° (9-12 o\'clock)' : '270-360° (12-3 o\'clock)',
                             totalReachablePoints: reachable.length,
                             totalBorderPoints: borderPoints.length,
-                            angleFilteredPoints: 0,
-                            reason: 'No calibration points in angle range, using calculated position'
+                            angleFilteredPoints: angleFilteredPoints.length,
+                            reason: 'No calibration points in valid angle/border range, using calculated position'
                         }
                     };
                 }
@@ -1773,6 +1781,8 @@
             var searchBtn = document.createElement('button');
             searchBtn.className = 'search-btn';
             searchBtn.textContent = '검색';
+            searchBtn.style.display = 'flex';  // Force visibility
+            searchBtn.style.visibility = 'visible';  // Force visibility
             
             // Position search button based on condition
             var buttonPosition = generateSearchButtonPosition(currentCondition);
@@ -1780,8 +1790,19 @@
             searchBtn.style.top = buttonPosition.y + 'px';
             
             console.log('Button position:', buttonPosition);
+            console.log('Button element created:', searchBtn);
+            console.log('Button will be placed at:', buttonPosition.x, buttonPosition.y);
             
             area.appendChild(searchBtn); // Button added separately to area
+            
+            // Verify button was added
+            var addedButton = area.querySelector('.search-btn');
+            if (!addedButton) {
+                console.error('Button was not added to DOM!');
+            } else {
+                console.log('Button successfully added to DOM, position:', addedButton.style.left, addedButton.style.top);
+                console.log('Button computed style:', window.getComputedStyle(addedButton).display, window.getComputedStyle(addedButton).visibility);
+            }
             
             // Start timing
             trialStartTime = Date.now();
