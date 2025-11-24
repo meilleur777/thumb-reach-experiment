@@ -647,12 +647,36 @@
                 </div>
             </div>
             
-            <!-- Screen 6: Experiment (Fixed/Adaptive) -->
+            <!-- Screen 6: Test Trial Instructions -->
+            <div class="screen" id="screen-test-intro">
+                <div class="button-area">
+                    <button class="btn-primary" id="btn-start-test">연습 시작</button>
+                </div>
+                
+                <div class="content-area">
+                    <h2>연습 시도</h2>
+                    <div class="instruction">
+                        <h3>실험 전 연습</h3>
+                        <p>본 실험을 시작하기 전에 1회 연습을 진행합니다.</p>
+                        <p style="margin-top: 10px;">• 검색 버튼이 <strong>상단 우측</strong>에 위치합니다</p>
+                        <p>• 화면의 문자열을 보고 검색 버튼을 누른 후 입력하세요</p>
+                        <p>• 입력 후 리턴(Return) 키를 눌러주세요</p>
+                        <p style="margin-top: 10px;">연습이므로 결과는 기록되지 않습니다.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Screen 7: Test Trial Experiment -->
+            <div class="screen" id="screen-test-trial">
+                <div class="experiment-area" id="test-area"></div>
+            </div>
+            
+            <!-- Screen 8: Experiment (Fixed/Adaptive/Bottom-right) -->
             <div class="screen" id="screen-experiment">
                 <div class="experiment-area" id="experiment-area"></div>
             </div>
             
-            <!-- Screen 7: Rest -->
+            <!-- Screen 9: Rest -->
             <div class="screen" id="screen-rest">
                 <div class="button-area">
                     <button class="btn-primary hidden" id="btn-continue">다음 실험 시작</button>
@@ -662,13 +686,13 @@
                     <h2>휴식 시간</h2>
                     <div class="instruction">
                         <p id="rest-message">실험이 완료되었습니다.</p>
-                        <p>3초간 휴식 후 다음 실험을 진행합니다.</p>
+                        <p id="rest-instruction">3초간 휴식 후 다음 실험을 진행합니다.</p>
                     </div>
                     <div class="countdown" id="rest-countdown">3</div>
                 </div>
             </div>
             
-            <!-- Screen 8: Results -->
+            <!-- Screen 10: Results -->
             <div class="screen" id="screen-results">
                 <div class="button-area">
                     <button class="btn-primary hidden" id="btn-download">백업 다운로드</button>
@@ -758,9 +782,18 @@
             studentId: '',
             handedness: '',
             reachableZone: [],
+            circleData: null, // Will store circle center and radius
             experiments: [],
             latinSquareRow: 0,
-            stringPool: []
+            stringPool: [],
+            deviceInfo: {
+                screenWidth: window.screen.width,
+                screenHeight: window.screen.height,
+                viewportWidth: window.innerWidth,
+                viewportHeight: window.innerHeight,
+                devicePixelRatio: window.devicePixelRatio,
+                userAgent: navigator.userAgent
+            }
         };
         
         var currentScreen = 'screen-welcome';
@@ -776,6 +809,7 @@
         var restInterval = null;
         var areaClickHandler = null;
         var participantCounter = 0; // Track participant order for Latin Square
+        var previousButtonPositions = []; // Track previous button positions for better distribution
         
         // Alert replacement function
         function showAlert(message, type) {
@@ -804,7 +838,8 @@
             document.getElementById('btn-hand-next').addEventListener('click', nextToCalibration);
             document.getElementById('btn-start-calib').addEventListener('click', startCalibration);
             document.getElementById('btn-finish-calib').addEventListener('click', finishCalibration);
-            document.getElementById('btn-start-exp').addEventListener('click', startMainExperiment);
+            document.getElementById('btn-start-exp').addEventListener('click', startTestTrial);
+            document.getElementById('btn-start-test').addEventListener('click', runTestTrial);
             document.getElementById('btn-continue').addEventListener('click', continueToSecondExperiment);
             document.getElementById('btn-download').addEventListener('click', downloadResults);
             
@@ -842,11 +877,11 @@
             document.getElementById(screenId).classList.add('active');
             currentScreen = screenId;
             
-            // Hide header and make content full-screen for experiment and calibration
+            // Hide header and make content full-screen for experiment, test trial, and calibration
             var header = document.querySelector('.header');
             var content = document.getElementById('main-content');
             
-            if (screenId === 'screen-experiment' || screenId === 'screen-calibration') {
+            if (screenId === 'screen-experiment' || screenId === 'screen-calibration' || screenId === 'screen-test-trial') {
                 header.classList.remove('show');
                 content.classList.add('full-screen');
             } else {
@@ -1049,17 +1084,259 @@
             participantData.stringPool = allStrings;
         }
         
+        function startTestTrial() {
+            // Show test trial introduction screen
+            showScreen('screen-test-intro');
+        }
+        
+        function runTestTrial() {
+            // Show test trial screen
+            showScreen('screen-test-trial');
+            
+            var area = document.getElementById('test-area');
+            area.innerHTML = '';
+            
+            // Create search bar
+            var searchContainer = document.createElement('div');
+            searchContainer.className = 'search-container';
+            searchContainer.id = 'search-container-test';
+            searchContainer.style.left = '0px';
+            searchContainer.style.top = '0px';
+            
+            var input = document.createElement('input');
+            input.className = 'search-input';
+            input.id = 'search-input-test';
+            input.type = 'text';
+            input.placeholder = '검색어를 입력하세요...';
+            input.maxLength = 999;
+            input.autocomplete = 'off';
+            input.autocorrect = 'off';
+            input.autocapitalize = 'off';
+            input.spellcheck = false;
+            input.style.caretColor = '#2563eb';
+            input.inputMode = 'text';
+            
+            searchContainer.appendChild(input);
+            area.appendChild(searchContainer);
+            
+            // Get test string (use first string from pool)
+            var testString = participantData.stringPool[0];
+            
+            // Display target string
+            var targetDisplay = document.createElement('div');
+            targetDisplay.className = 'target-text';
+            targetDisplay.textContent = testString;
+            area.appendChild(targetDisplay);
+            
+            // Create search button at TOP-RIGHT (fixed position)
+            var searchBtn = document.createElement('button');
+            searchBtn.className = 'search-btn';
+            searchBtn.textContent = '검색';
+            
+            var areaWidth = area.clientWidth;
+            var buttonWidth = 80;
+            searchBtn.style.left = (areaWidth - buttonWidth - 10) + 'px';
+            searchBtn.style.top = '5px';
+            
+            area.appendChild(searchBtn);
+            
+            var keyboardOpened = false;
+            
+            // Search button click handler
+            var openKeyboard = function(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                
+                if (!keyboardOpened) {
+                    keyboardOpened = true;
+                }
+                
+                input.focus();
+            };
+            
+            searchBtn.addEventListener('click', openKeyboard, {passive: false});
+            
+            searchBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, {passive: false});
+            
+            searchBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                openKeyboard(e);
+            }, {passive: false});
+            
+            input.addEventListener('touchstart', function(e) {
+                if (!keyboardOpened) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openKeyboard();
+                }
+            }, {passive: false});
+            
+            // Handle Enter/Return key
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' || e.keyCode === 13) {
+                    e.preventDefault();
+                    finishTestTrial();
+                }
+            });
+            
+            var finishTestTrial = function() {
+                var userInput = input.value.toLowerCase();
+                var isCorrect = userInput === testString.toLowerCase();
+                
+                // Visual feedback
+                var searchContainer = document.getElementById('search-container-test');
+                if (isCorrect) {
+                    searchContainer.style.borderColor = '#10b981';
+                    searchContainer.style.background = '#d1fae5';
+                    showAlert('연습 완료!', 'success');
+                } else {
+                    searchContainer.style.borderColor = '#ef4444';
+                    searchContainer.style.background = '#fee2e2';
+                    showAlert('연습 완료!', 'info');
+                }
+                
+                input.blur();
+                
+                setTimeout(function() {
+                    showTestRestScreen();
+                }, 1000);
+            };
+        }
+        
         function startMainExperiment() {
             currentExperimentIndex = 0;
             startCondition(experimentOrder[0]);
+        }
+        
+        function calculateAndStoreCircleData() {
+            // This function calculates the circle parameters used for adaptive button positioning
+            // and stores them in participantData for inclusion in results
+            
+            var reachable = participantData.reachableZone;
+            var handedness = participantData.handedness;
+            
+            if (reachable.length === 0) {
+                participantData.circleData = null;
+                return;
+            }
+            
+            // Calculate centroid of reachable points
+            var sumX = 0, sumY = 0;
+            for (var i = 0; i < reachable.length; i++) {
+                sumX += reachable[i].x;
+                sumY += reachable[i].y;
+            }
+            var centroidX = sumX / reachable.length;
+            var centroidY = sumY / reachable.length;
+            
+            // Get viewport dimensions
+            var areaWidth = window.innerWidth;
+            var areaHeight = window.innerHeight;
+            
+            // Determine circle center based on handedness
+            var circleCenter;
+            if (handedness === 'right') {
+                circleCenter = {
+                    x: Math.max(centroidX, areaWidth * 0.6),
+                    y: Math.max(centroidY, areaHeight * 0.6)
+                };
+            } else {
+                circleCenter = {
+                    x: Math.min(centroidX, areaWidth * 0.4),
+                    y: Math.max(centroidY, areaHeight * 0.6)
+                };
+            }
+            
+            // Find the farthest reachable point from the circle center
+            var maxDistance = 0;
+            var farthestPoint = null;
+            
+            for (var i = 0; i < reachable.length; i++) {
+                var point = reachable[i];
+                var distance = Math.sqrt(
+                    Math.pow(point.x - circleCenter.x, 2) + 
+                    Math.pow(point.y - circleCenter.y, 2)
+                );
+                if (distance > maxDistance) {
+                    maxDistance = distance;
+                    farthestPoint = point;
+                }
+            }
+            
+            var radius = maxDistance;
+            var borderThreshold = radius * 0.25;
+            
+            // Store circle data
+            participantData.circleData = {
+                handedness: handedness,
+                centroid: {x: centroidX, y: centroidY},
+                circleCenter: circleCenter,
+                radius: radius,
+                borderThreshold: borderThreshold,
+                borderRange: {
+                    min: radius - borderThreshold,
+                    max: radius
+                },
+                farthestPoint: farthestPoint,
+                angleRange: handedness === 'right' ? '180-270° (9-12 o\'clock)' : '270-360° (12-3 o\'clock)',
+                angleRangeDegrees: handedness === 'right' ? {min: 180, max: 270} : {min: 270, max: 360}
+            };
+            
+            console.log('Circle data calculated:', participantData.circleData);
+        }
+        
+        function showTestRestScreen() {
+            showScreen('screen-rest');
+            
+            // Update message for test trial rest
+            document.getElementById('rest-message').textContent = '연습이 완료되었습니다.';
+            document.getElementById('rest-instruction').textContent = '3초간 휴식 후 본 실험을 시작합니다.';
+            
+            var timeLeft = 3;
+            document.getElementById('rest-countdown').textContent = timeLeft;
+            
+            if (restInterval) {
+                clearInterval(restInterval);
+            }
+            
+            restInterval = setInterval(function() {
+                timeLeft--;
+                document.getElementById('rest-countdown').textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(restInterval);
+                    document.getElementById('btn-continue').classList.remove('hidden');
+                    // Change button handler for test rest
+                    document.getElementById('btn-continue').onclick = startMainExperimentAfterRest;
+                }
+            }, 1000);
+        }
+        
+        function startMainExperimentAfterRest() {
+            // Reset button handler
+            document.getElementById('btn-continue').onclick = continueToSecondExperiment;
+            document.getElementById('btn-continue').classList.add('hidden');
+            startMainExperiment();
         }
         
         function startCondition(condition) {
             currentCondition = condition;
             currentTrial = 0;
             experimentData = [];
+            previousButtonPositions = []; // Reset for new condition
             
             console.log('Starting condition:', condition, 'Trial count:', currentTrial);
+            
+            // Calculate circle data once per condition (for adaptive condition)
+            if (condition === 'adaptive' && participantData.reachableZone.length > 0) {
+                calculateAndStoreCircleData();
+            }
             
             // No title or description shown during experiment
             showScreen('screen-experiment');
@@ -1121,71 +1398,307 @@
                 var x = areaWidth - buttonWidth - 10; // 10px from right
                 var y = 5; // Aligned with search bar (small top margin)
                 
-                return {x: x, y: y, zone: 'top-right-fixed'};
+                return {
+                    x: x, 
+                    y: y, 
+                    zone: 'top-right-fixed',
+                    generationMethod: 'fixed-top-right',
+                    details: null
+                };
             } else if (condition === 'bottom-right') {
                 // Bottom-right position: Fixed at bottom-right corner
                 var x = areaWidth - buttonWidth - 10; // 10px from right
                 var y = areaHeight - buttonHeight - 50; // 50px from bottom (above keyboard area)
                 
-                return {x: x, y: y, zone: 'bottom-right-fixed'};
+                return {
+                    x: x, 
+                    y: y, 
+                    zone: 'bottom-right-fixed',
+                    generationMethod: 'fixed-bottom-right',
+                    details: null
+                };
             } else {
-                // Adaptive: RANDOMIZE button position within reachable zone
+                // Adaptive: Circle-based positioning using handedness
                 if (participantData.reachableZone.length === 0) {
                     // Fallback to fixed position if no calibration data
                     var x = areaWidth - buttonWidth - 10;
                     var y = 5;
-                    return {x: x, y: y, zone: 'top-right-fixed'};
+                    return {
+                        x: x, 
+                        y: y, 
+                        zone: 'top-right-fixed',
+                        generationMethod: 'adaptive-no-calibration-fallback',
+                        details: {
+                            reason: 'No calibration data available'
+                        }
+                    };
                 }
                 
                 var reachable = participantData.reachableZone;
+                var handedness = participantData.handedness;
                 
-                // Filter points: below search bar + target string area
-                var minY = searchBarHeight + targetStringHeight + 10;
-                var validPoints = reachable.filter(function(point) {
-                    return point.y > minY; // Below search bar and target string
+                // Step 1: Determine circle center based on handedness
+                // Position center in the MIDDLE of the reachable area, but biased toward hand side
+                // This ensures the circle border spans the full thumb reach area
+                var circleCenter;
+                
+                // Calculate the centroid of reachable points for better positioning
+                var sumX = 0, sumY = 0;
+                for (var i = 0; i < reachable.length; i++) {
+                    sumX += reachable[i].x;
+                    sumY += reachable[i].y;
+                }
+                var centroidX = sumX / reachable.length;
+                var centroidY = sumY / reachable.length;
+                
+                if (handedness === 'right') {
+                    // For right-handed users, center slightly to the right and lower
+                    circleCenter = {
+                        x: Math.max(centroidX, areaWidth * 0.6),  // At least 60% to the right
+                        y: Math.max(centroidY, areaHeight * 0.6)  // At least 60% down
+                    };
+                } else {
+                    // For left-handed users, center slightly to the left and lower
+                    circleCenter = {
+                        x: Math.min(centroidX, areaWidth * 0.4),  // At most 40% to the right
+                        y: Math.max(centroidY, areaHeight * 0.6)  // At least 60% down
+                    };
+                }
+                
+                // Step 2: Calculate radius from calibration data
+                // Find the farthest reachable point from the circle center
+                var maxDistance = 0;
+                var farthestPoint = null;
+                
+                for (var i = 0; i < reachable.length; i++) {
+                    var point = reachable[i];
+                    var distance = Math.sqrt(
+                        Math.pow(point.x - circleCenter.x, 2) + 
+                        Math.pow(point.y - circleCenter.y, 2)
+                    );
+                    if (distance > maxDistance) {
+                        maxDistance = distance;
+                        farthestPoint = point;
+                    }
+                }
+                
+                var radius = maxDistance;
+                
+                // Step 3: Filter calibration points that are on or near the circle border
+                // Define "border" as points within a certain threshold of the radius
+                var borderThreshold = radius * 0.25; // 25% tolerance (wider border for more positions)
+                var minBorderDistance = radius - borderThreshold;
+                var maxBorderDistance = radius;
+                
+                var borderPoints = reachable.filter(function(point) {
+                    var distance = Math.sqrt(
+                        Math.pow(point.x - circleCenter.x, 2) + 
+                        Math.pow(point.y - circleCenter.y, 2)
+                    );
+                    return distance >= minBorderDistance && distance <= maxBorderDistance;
                 });
                 
-                if (validPoints.length === 0) {
-                    // If no valid points, use all points below search bar
-                    validPoints = reachable.filter(function(point) {
-                        return point.y > searchBarHeight + 20;
-                    });
-                }
-                
-                if (validPoints.length === 0) {
-                    validPoints = reachable;
-                }
-                
-                var attempts = 0;
-                var maxAttempts = 100;
-                
-                while (attempts < maxAttempts) {
-                    // Pick a random point from reachable zone
-                    var point = validPoints[Math.floor(Math.random() * validPoints.length)];
+                // Step 4: Filter border points by angle based on handedness
+                // Calculate angle for each point relative to circle center
+                // Angle 0° = right (3 o'clock), 90° = down (6 o'clock), 180° = left (9 o'clock), 270° = up (12 o'clock)
+                var angleFilteredPoints = borderPoints.filter(function(point) {
+                    var dx = point.x - circleCenter.x;
+                    var dy = point.y - circleCenter.y;
                     
-                    // Center button around this point
-                    var x = Math.max(10, Math.min(areaWidth - buttonWidth - 10, point.x - buttonWidth / 2));
-                    var y = Math.max(minY, Math.min(areaHeight - buttonHeight - 10, point.y - buttonHeight / 2));
+                    // Calculate angle in radians, then convert to degrees
+                    // atan2 returns angle from -PI to PI, we convert to 0-360
+                    var angleRad = Math.atan2(dy, dx);
+                    var angleDeg = angleRad * 180 / Math.PI;
                     
-                    // Make sure there's distance from edges
-                    if (x > 10 && 
-                        x < areaWidth - buttonWidth - 10 && 
-                        y > minY && 
-                        y < areaHeight - buttonHeight - 10) {
-                        return {x: x, y: y, zone: 'adaptive-random'};
+                    // Normalize to 0-360 range
+                    if (angleDeg < 0) {
+                        angleDeg += 360;
                     }
                     
+                    if (handedness === 'right') {
+                        // Right-handed: 180° to 270° (9 o'clock to 12 o'clock - left side going up)
+                        return angleDeg >= 180 && angleDeg <= 270;
+                    } else {
+                        // Left-handed: 270° to 360° (12 o'clock to 3 o'clock - top going right)
+                        return angleDeg >= 270 && angleDeg <= 360;
+                    }
+                });
+                
+                // Step 5: Further filter to exclude search bar and target string area
+                var minY = searchBarHeight + targetStringHeight + 10;
+                var validBorderPoints = angleFilteredPoints.filter(function(point) {
+                    return point.y > minY;
+                });
+                
+                // If no valid border points, use all angle-filtered points
+                if (validBorderPoints.length === 0) {
+                    validBorderPoints = angleFilteredPoints;
+                }
+                
+                // If still no points, fall back to calculating position on circle at specific angle
+                if (validBorderPoints.length === 0) {
+                    // Generate a random angle within the allowed range
+                    var randomAngle;
+                    if (handedness === 'right') {
+                        // 180° to 270° (in radians: π to 3π/2)
+                        // 9 o'clock to 12 o'clock - left side going up
+                        var minAngle = Math.PI;              // 180 degrees
+                        var maxAngle = Math.PI * 3 / 2;     // 270 degrees
+                        randomAngle = minAngle + Math.random() * (maxAngle - minAngle);
+                    } else {
+                        // 270° to 360° (in radians: 3π/2 to 2π)
+                        // 12 o'clock to 3 o'clock - top going right
+                        var minAngle = Math.PI * 3 / 2;     // 270 degrees
+                        var maxAngle = Math.PI * 2;         // 360 degrees
+                        randomAngle = minAngle + Math.random() * (maxAngle - minAngle);
+                    }
+                    
+                    var borderX = circleCenter.x + radius * Math.cos(randomAngle);
+                    var borderY = circleCenter.y + radius * Math.sin(randomAngle);
+                    
+                    // Center button on this calculated border point
+                    var x = Math.max(10, Math.min(areaWidth - buttonWidth - 10, borderX - buttonWidth / 2));
+                    var y = Math.max(minY, Math.min(areaHeight - buttonHeight - 10, borderY - buttonHeight / 2));
+                    
+                    return {
+                        x: x,
+                        y: y,
+                        zone: 'adaptive-circle-border-calculated',
+                        generationMethod: 'adaptive-circle-border-angle-calculated',
+                        details: {
+                            handedness: handedness,
+                            circleCenter: circleCenter,
+                            radius: radius,
+                            farthestPoint: farthestPoint,
+                            borderThreshold: borderThreshold,
+                            calculatedBorderPoint: {x: borderX, y: borderY},
+                            angle: randomAngle,
+                            angleDegrees: randomAngle * 180 / Math.PI,
+                            allowedAngleRange: handedness === 'right' ? '180-270° (9-12 o\'clock)' : '270-360° (12-3 o\'clock)',
+                            totalReachablePoints: reachable.length,
+                            totalBorderPoints: borderPoints.length,
+                            angleFilteredPoints: 0,
+                            reason: 'No calibration points in angle range, using calculated position'
+                        }
+                    };
+                }
+                
+                // Step 6: Randomly select a point from valid angle-filtered border points
+                // Improve randomization by avoiding recently used positions
+                var selectedPoint = null;
+                var attempts = 0;
+                var maxAttempts = 50;
+                var minDistanceFromPrevious = 80; // Minimum pixels distance from previous button
+                
+                // Divide the angle range into segments to ensure better distribution
+                var angleSegments = handedness === 'right' ? 
+                    [{min: 180, max: 207.5}, {min: 207.5, max: 235}, {min: 235, max: 262.5}, {min: 262.5, max: 270}] :
+                    [{min: 270, max: 292.5}, {min: 292.5, max: 315}, {min: 315, max: 337.5}, {min: 337.5, max: 360}];
+                
+                // Try to select from underused segments first
+                var trialModulo = currentTrial % angleSegments.length;
+                var preferredSegment = angleSegments[trialModulo];
+                
+                // Filter points by preferred segment
+                var segmentPoints = validBorderPoints.filter(function(point) {
+                    var dx = point.x - circleCenter.x;
+                    var dy = point.y - circleCenter.y;
+                    var angleRad = Math.atan2(dy, dx);
+                    var angleDeg = angleRad * 180 / Math.PI;
+                    if (angleDeg < 0) angleDeg += 360;
+                    
+                    return angleDeg >= preferredSegment.min && angleDeg <= preferredSegment.max;
+                });
+                
+                // If no points in preferred segment, use all valid points
+                var candidatePoints = segmentPoints.length > 0 ? segmentPoints : validBorderPoints;
+                
+                // Try to find a point with sufficient distance from previous positions
+                while (attempts < maxAttempts && candidatePoints.length > 0) {
+                    var randomIndex = Math.floor(Math.random() * candidatePoints.length);
+                    var candidatePoint = candidatePoints[randomIndex];
+                    
+                    // Check distance from all previous positions
+                    var tooClose = false;
+                    for (var i = 0; i < previousButtonPositions.length; i++) {
+                        var prevPos = previousButtonPositions[i];
+                        var distance = Math.sqrt(
+                            Math.pow(candidatePoint.x - prevPos.x, 2) + 
+                            Math.pow(candidatePoint.y - prevPos.y, 2)
+                        );
+                        
+                        if (distance < minDistanceFromPrevious) {
+                            tooClose = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!tooClose) {
+                        selectedPoint = candidatePoint;
+                        break;
+                    }
+                    
+                    // Remove this candidate and try another
+                    candidatePoints.splice(randomIndex, 1);
                     attempts++;
                 }
                 
-                // Fallback: use average position of reachable zone
-                var avgX = validPoints.reduce(function(sum, p) { return sum + p.x; }, 0) / validPoints.length;
-                var avgY = validPoints.reduce(function(sum, p) { return sum + p.y; }, 0) / validPoints.length;
+                // If no point found with sufficient distance, just pick randomly
+                if (!selectedPoint) {
+                    selectedPoint = validBorderPoints[Math.floor(Math.random() * validBorderPoints.length)];
+                }
                 
-                var x = Math.max(10, Math.min(areaWidth - buttonWidth - 10, avgX - buttonWidth / 2));
-                var y = Math.max(minY, Math.min(areaHeight - buttonHeight - 10, avgY - buttonHeight / 2));
+                // Store this position for future reference
+                previousButtonPositions.push({x: selectedPoint.x, y: selectedPoint.y});
                 
-                return {x: x, y: y, zone: 'adaptive-fallback'};
+                // Keep only last 3 positions to avoid over-constraining
+                if (previousButtonPositions.length > 3) {
+                    previousButtonPositions.shift();
+                }
+                
+                // Calculate distance and angle from center for the selected point
+                var selectedDistance = Math.sqrt(
+                    Math.pow(selectedPoint.x - circleCenter.x, 2) + 
+                    Math.pow(selectedPoint.y - circleCenter.y, 2)
+                );
+                
+                var selectedAngleRad = Math.atan2(selectedPoint.y - circleCenter.y, selectedPoint.x - circleCenter.x);
+                var selectedAngleDeg = selectedAngleRad * 180 / Math.PI;
+                if (selectedAngleDeg < 0) {
+                    selectedAngleDeg += 360;
+                }
+                
+                // Center button on selected border point
+                var x = Math.max(10, Math.min(areaWidth - buttonWidth - 10, selectedPoint.x - buttonWidth / 2));
+                var y = Math.max(minY, Math.min(areaHeight - buttonHeight - 10, selectedPoint.y - buttonHeight / 2));
+                
+                return {
+                    x: x,
+                    y: y,
+                    zone: 'adaptive-circle-border-angle',
+                    generationMethod: 'adaptive-circle-border-angle-from-calibration',
+                    details: {
+                        handedness: handedness,
+                        circleCenter: circleCenter,
+                        radius: radius,
+                        farthestPoint: farthestPoint,
+                        borderThreshold: borderThreshold,
+                        minBorderDistance: minBorderDistance,
+                        maxBorderDistance: maxBorderDistance,
+                        selectedBorderPoint: {x: selectedPoint.x, y: selectedPoint.y},
+                        selectedPointDistance: selectedDistance,
+                        selectedPointAngle: selectedAngleDeg,
+                        preferredAngleSegment: preferredSegment,
+                        usedSegmentPoints: segmentPoints.length > 0,
+                        attemptsToAvoidPrevious: attempts,
+                        minDistanceFromPrevious: minDistanceFromPrevious,
+                        allowedAngleRange: handedness === 'right' ? '180-270° (9-12 o\'clock)' : '270-360° (12-3 o\'clock)',
+                        totalReachablePoints: reachable.length,
+                        totalBorderPoints: borderPoints.length,
+                        angleFilteredBorderPoints: angleFilteredPoints.length,
+                        validBorderPoints: validBorderPoints.length
+                    }
+                };
             }
         }
         
@@ -1257,12 +1770,26 @@
             trialStartTime = Date.now();
             searchInputStartTime = 0;
             var keyboardOpened = false;
+            var buttonTouchPosition = null; // Track where user touched the button
             
             // Search button click: Opens keyboard by focusing input
             var openKeyboard = function(e) {
                 if (e) {
                     e.preventDefault();
                     e.stopPropagation();
+                    
+                    // Capture touch position
+                    if (e.touches && e.touches.length > 0) {
+                        buttonTouchPosition = {
+                            x: e.touches[0].clientX,
+                            y: e.touches[0].clientY
+                        };
+                    } else if (e.clientX !== undefined && e.clientY !== undefined) {
+                        buttonTouchPosition = {
+                            x: e.clientX,
+                            y: e.clientY
+                        };
+                    }
                 }
                 
                 if (!keyboardOpened) {
@@ -1285,6 +1812,15 @@
             searchBtn.addEventListener('touchend', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                
+                // Capture touch position from changedTouches (for touchend)
+                if (e.changedTouches && e.changedTouches.length > 0) {
+                    buttonTouchPosition = {
+                        x: e.changedTouches[0].clientX,
+                        y: e.changedTouches[0].clientY
+                    };
+                }
+                
                 openKeyboard(e);
             }, {passive: false});
             
@@ -1328,6 +1864,7 @@
                     targetString: currentTargetString,
                     userInput: userInput,
                     buttonPosition: buttonPosition,
+                    buttonTouchPosition: buttonTouchPosition, // Where user actually touched
                     completionTime: completionTime,
                     typingTime: typingTime,
                     error: !isCorrect
@@ -1404,6 +1941,7 @@
             var totalConditions = experimentOrder.length;
             document.getElementById('rest-message').textContent = 
                 conditionNumber + '번째 실험이 완료되었습니다. (총 ' + totalConditions + '개 중)';
+            document.getElementById('rest-instruction').textContent = '3초간 휴식 후 다음 실험을 진행합니다.';
             
             document.getElementById('rest-countdown').textContent = timeLeft;
             
@@ -1484,17 +2022,19 @@
                     handedness: participantData.handedness,
                     timestamp: participantData.timestamp
                 },
+                deviceInfo: participantData.deviceInfo,
                 calibration: {
                     reachablePoints: participantData.reachableZone.length,
                     points: participantData.reachableZone
                 },
+                circleData: participantData.circleData,
                 experiments: participantData.experiments.map(function(exp) {
                     var validTrials = exp.data.filter(function(t) { return !t.error; });
                     return {
                         condition: exp.condition,
                         order: exp.order,
-                        avgCompletionTime: validTrials.reduce(function(sum, t) { return sum + t.completionTime; }, 0) / validTrials.length,
-                        errorRate: exp.data.filter(function(t) { return t.error; }).length / exp.data.length,
+                        avgCompletionTime: validTrials.length > 0 ? validTrials.reduce(function(sum, t) { return sum + t.completionTime; }, 0) / validTrials.length : 0,
+                        errorRate: exp.data.length > 0 ? exp.data.filter(function(t) { return t.error; }).length / exp.data.length : 0,
                         trials: exp.data
                     };
                 })
@@ -1537,10 +2077,12 @@
                     handedness: participantData.handedness,
                     timestamp: participantData.timestamp
                 },
+                deviceInfo: participantData.deviceInfo,
                 calibration: {
                     reachablePoints: participantData.reachableZone.length,
                     points: participantData.reachableZone
                 },
+                circleData: participantData.circleData,
                 experiments: participantData.experiments.map(function(exp) {
                     var validTrials = exp.data.filter(function(t) { return !t.error; });
                     return {
