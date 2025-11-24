@@ -1614,6 +1614,20 @@
                     var x = Math.max(10, Math.min(areaWidth - buttonWidth - 10, borderX - buttonWidth / 2));
                     var y = Math.max(10, Math.min(areaHeight - buttonHeight - 10, borderY - buttonHeight / 2));
                     
+                    // CRITICAL: Validate position is actually on screen
+                    if (isNaN(x) || isNaN(y) || x < 0 || y < 0 || x > areaWidth - buttonWidth || y > areaHeight - buttonHeight) {
+                        console.error('Invalid fallback position calculated:', {x: x, y: y});
+                        // Force to safe default position based on handedness
+                        if (handedness === 'right') {
+                            x = 50;  // Left side for right-handed
+                            y = 200;
+                        } else {
+                            x = areaWidth - buttonWidth - 50;  // Right side for left-handed
+                            y = 200;
+                        }
+                        console.log('Using emergency safe position:', {x: x, y: y});
+                    }
+                    
                     console.log('Fallback button position:', {x: x, y: y, angle: randomAngle * 180 / Math.PI});
                     
                     return {
@@ -1730,6 +1744,15 @@
                 var x = Math.max(10, Math.min(areaWidth - buttonWidth - 10, selectedPoint.x - buttonWidth / 2));
                 var y = Math.max(minY, Math.min(areaHeight - buttonHeight - 10, selectedPoint.y - buttonHeight / 2));
                 
+                // CRITICAL: Validate position is actually on screen
+                if (isNaN(x) || isNaN(y) || x < 0 || y < 0 || x > areaWidth - buttonWidth || y > areaHeight - buttonHeight) {
+                    console.error('Invalid button position calculated:', {x: x, y: y});
+                    // Force to safe default position
+                    x = Math.max(10, Math.min(areaWidth - buttonWidth - 10, 100));
+                    y = Math.max(minY, Math.min(areaHeight - buttonHeight - 10, 300));
+                    console.log('Using safe fallback position:', {x: x, y: y});
+                }
+                
                 return {
                     x: x,
                     y: y,
@@ -1819,15 +1842,39 @@
             searchBtn.textContent = '검색';
             searchBtn.style.display = 'flex';  // Force visibility
             searchBtn.style.visibility = 'visible';  // Force visibility
+            searchBtn.style.opacity = '1';  // Force opacity
+            searchBtn.style.zIndex = '50000';  // Force z-index
+            searchBtn.style.position = 'absolute';  // Ensure positioned
             
             // Position search button based on condition
             var buttonPosition = generateSearchButtonPosition(currentCondition);
-            searchBtn.style.left = buttonPosition.x + 'px';
-            searchBtn.style.top = buttonPosition.y + 'px';
+            
+            // FINAL VALIDATION: Ensure position is valid before applying
+            if (!buttonPosition || isNaN(buttonPosition.x) || isNaN(buttonPosition.y)) {
+                console.error('CRITICAL: Invalid button position returned:', buttonPosition);
+                // Emergency fallback based on condition
+                if (currentCondition === 'fixed') {
+                    buttonPosition = {x: areaWidth - 90, y: 5, zone: 'emergency-fixed'};
+                } else if (currentCondition === 'bottom-right') {
+                    buttonPosition = {x: areaWidth - 90, y: areaHeight - 100, zone: 'emergency-bottom'};
+                } else {
+                    // Adaptive emergency - use middle left
+                    buttonPosition = {x: 50, y: 300, zone: 'emergency-adaptive'};
+                }
+                console.log('Using emergency position:', buttonPosition);
+            }
+            
+            // Ensure values are valid numbers
+            var finalX = Math.max(0, Math.min(areaWidth - 80, Math.round(buttonPosition.x)));
+            var finalY = Math.max(0, Math.min(areaHeight - 50, Math.round(buttonPosition.y)));
+            
+            searchBtn.style.left = finalX + 'px';
+            searchBtn.style.top = finalY + 'px';
             
             console.log('Button position:', buttonPosition);
+            console.log('Final position applied:', {x: finalX, y: finalY});
             console.log('Button element created:', searchBtn);
-            console.log('Button will be placed at:', buttonPosition.x, buttonPosition.y);
+            console.log('Button will be placed at:', finalX, finalY);
             
             area.appendChild(searchBtn); // Button added separately to area
             
