@@ -1238,16 +1238,16 @@
             // FIXED circle center for iPhone 16
             var circleCenter;
             if (handedness === 'right') {
-                // Right-handed: bottom-right position
+                // Right-handed: bottom-right position, closer to thumb rest
                 circleCenter = {
-                    x: 320,  // Near right edge
-                    y: 750   // Near bottom
+                    x: 350,  // Closer to right edge
+                    y: 800   // Very close to bottom
                 };
             } else {
-                // Left-handed: bottom-left position
+                // Left-handed: bottom-left position, closer to thumb rest
                 circleCenter = {
-                    x: 73,   // Near left edge
-                    y: 750   // Near bottom
+                    x: 43,   // Closer to left edge
+                    y: 800   // Very close to bottom
                 };
             }
             
@@ -1267,8 +1267,8 @@
             
             distances.sort(function(a, b) { return a.distance - b.distance; });
             
-            // Use 75th percentile as radius (comfortable reach)
-            var percentileIndex = Math.floor(distances.length * 0.75);
+            // Use 70th percentile as radius (conservative comfortable reach)
+            var percentileIndex = Math.floor(distances.length * 0.70);
             var radius = distances[percentileIndex].distance;
             var radiusPoint = distances[percentileIndex].point;
             
@@ -1285,7 +1285,7 @@
                 circleCenter: circleCenter,
                 circleCenterType: 'fixed-iphone16',
                 radius: radius,
-                radiusCalculationMethod: '75th percentile of calibration distances',
+                radiusCalculationMethod: '70th percentile of calibration distances',
                 radiusPoint: radiusPoint,
                 maxDistance: maxDistance,
                 farthestPoint: farthestPoint,
@@ -1449,21 +1449,21 @@
                 
                 // Step 1: Determine FIXED circle center for iPhone 16
                 // iPhone 16 dimensions: 393px width × ~852px height
-                // Fixed positions optimized for thumb reach
+                // Fixed positions optimized for thumb reach - positioned closer to thumb rest
                 var circleCenter;
                 if (handedness === 'right') {
-                    // For right-handed: center at bottom-right
+                    // For right-handed: center at bottom-right, closer to actual thumb position
                     // This makes the left side (180-270°) the farthest reach
                     circleCenter = {
-                        x: 320,  // Near right edge (393 - 73)
-                        y: 750   // Near bottom
+                        x: 350,  // Closer to right edge (393 - 43)
+                        y: 800   // Very close to bottom (where thumb rests)
                     };
                 } else {
-                    // For left-handed: center at bottom-left
+                    // For left-handed: center at bottom-left, closer to actual thumb position
                     // This makes the right side (270-360°) the farthest reach
                     circleCenter = {
-                        x: 73,   // Near left edge
-                        y: 750   // Near bottom
+                        x: 43,   // Closer to left edge
+                        y: 800   // Very close to bottom (where thumb rests)
                     };
                 }
                 
@@ -1487,8 +1487,8 @@
                 // Sort by distance
                 distances.sort(function(a, b) { return a.distance - b.distance; });
                 
-                // Use 75th percentile distance as radius (comfortable reach, not extreme)
-                var percentileIndex = Math.floor(distances.length * 0.75);
+                // Use 70th percentile distance as radius (conservative comfortable reach)
+                var percentileIndex = Math.floor(distances.length * 0.70);
                 var radius = distances[percentileIndex].distance;
                 var radiusPoint = distances[percentileIndex].point;
                 
@@ -1695,7 +1695,7 @@
                         handedness: handedness,
                         circleCenter: circleCenter,
                         radius: radius,
-                        radiusCalculationMethod: '75th percentile',
+                        radiusCalculationMethod: '70th percentile',
                         radiusPoint: radiusPoint,
                         maxDistance: maxDistance,
                         farthestPoint: farthestPoint,
