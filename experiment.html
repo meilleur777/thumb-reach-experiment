@@ -1277,13 +1277,13 @@
                 // Right-handed: bottom-right position, closer to thumb rest
                 circleCenter = {
                     x: 350,  // Closer to right edge
-                    y: 800   // Very close to bottom
+                    y: 700   // Lower but safe for keyboard
                 };
             } else {
                 // Left-handed: bottom-left position, closer to thumb rest
                 circleCenter = {
                     x: 43,   // Closer to left edge
-                    y: 800   // Very close to bottom
+                    y: 700   // Lower but safe for keyboard
                 };
             }
             
@@ -1484,22 +1484,23 @@
                 var handedness = participantData.handedness;
                 
                 // Step 1: Determine FIXED circle center for iPhone 16
-                // iPhone 16 dimensions: 393px width × ~852px height
-                // Fixed positions optimized for thumb reach - positioned closer to thumb rest
+                // iPhone 16 logical dimensions: 393px width × 852px height (CSS pixels)
+                // Physical: 1179×2556 pixels (3x ratio) - handled automatically
+                // Fixed positions optimized for thumb reach
                 var circleCenter;
                 if (handedness === 'right') {
                     // For right-handed: center at bottom-right, closer to actual thumb position
                     // This makes the left side (180-270°) the farthest reach
                     circleCenter = {
                         x: 350,  // Closer to right edge (393 - 43)
-                        y: 800   // Very close to bottom (where thumb rests)
+                        y: 700   // Lower but not too close to bottom (safer when keyboard appears)
                     };
                 } else {
                     // For left-handed: center at bottom-left, closer to actual thumb position
                     // This makes the right side (270-360°) the farthest reach
                     circleCenter = {
                         x: 43,   // Closer to left edge
-                        y: 800   // Very close to bottom (where thumb rests)
+                        y: 700   // Lower but not too close to bottom (safer when keyboard appears)
                     };
                 }
                 
@@ -1534,9 +1535,16 @@
                 
                 // Step 3: Filter calibration points that are on or near the circle border
                 // Define "border" as points within a certain threshold of the radius
-                var borderThreshold = radius * 0.25; // 25% tolerance (wider border for more positions)
+                var borderThreshold = radius * 0.40; // 40% tolerance (very wide border to get more points)
                 var minBorderDistance = radius - borderThreshold;
-                var maxBorderDistance = radius;
+                var maxBorderDistance = radius + (borderThreshold * 0.2); // Allow slightly beyond radius too
+                
+                console.log('Border filtering:', {
+                    radius: radius,
+                    minBorderDistance: minBorderDistance,
+                    maxBorderDistance: maxBorderDistance,
+                    totalPoints: reachable.length
+                });
                 
                 var borderPoints = reachable.filter(function(point) {
                     var distance = Math.sqrt(
@@ -1545,6 +1553,8 @@
                     );
                     return distance >= minBorderDistance && distance <= maxBorderDistance;
                 });
+                
+                console.log('Points on border:', borderPoints.length);
                 
                 // Step 4: Filter border points by angle based on handedness
                 // Calculate angle for each point relative to circle center
@@ -1564,26 +1574,37 @@
                     }
                     
                     if (handedness === 'right') {
-                        // Right-handed: 180° to 270° (9 o'clock to 12 o'clock - left side going up)
-                        return angleDeg >= 180 && angleDeg <= 270;
+                        // Right-handed: 170° to 280° (slightly wider than 180-270 for more points)
+                        return angleDeg >= 170 && angleDeg <= 280;
                     } else {
-                        // Left-handed: 270° to 360° (12 o'clock to 3 o'clock - top going right)
-                        return angleDeg >= 270 && angleDeg <= 360;
+                        // Left-handed: 260° to 370° (wraps around - 260-360 and 0-10)
+                        return (angleDeg >= 260 && angleDeg <= 360) || (angleDeg >= 0 && angleDeg <= 10);
                     }
                 });
                 
-                // Step 5: Further filter to exclude search bar and target string area
-                var minY = searchBarHeight + targetStringHeight + 10;
+                console.log('Points after angle filter:', angleFilteredPoints.length);
+                
+                // Step 5: Further filter to exclude search bar and target string area (but be less strict)
+                var minY = searchBarHeight + 100; // Reduced from 180 to 150 for more points
                 var validBorderPoints = angleFilteredPoints.filter(function(point) {
                     return point.y > minY;
                 });
                 
-                // If no valid border points, use all angle-filtered points
+                console.log('Points after Y-filter (minY=' + minY + '):', validBorderPoints.length);
+                
+                // If no valid border points, use all angle-filtered points (ignore Y restriction)
                 if (validBorderPoints.length === 0) {
+                    console.log('No points after Y-filter, using all angle-filtered points');
                     validBorderPoints = angleFilteredPoints;
                 }
                 
-                // If still no points, fall back to calculating position on circle at specific angle
+                // If still no points, use all border points (ignore angle restriction)
+                if (validBorderPoints.length === 0) {
+                    console.log('No angle-filtered points, using all border points');
+                    validBorderPoints = borderPoints;
+                }
+                
+                // If STILL no points, fall back to calculating position on circle at specific angle
                 if (validBorderPoints.length === 0) {
                     console.warn('No valid border points found, using calculated position');
                     
@@ -1618,11 +1639,15 @@
                     if (isNaN(x) || isNaN(y) || x < 0 || y < 0 || x > areaWidth - buttonWidth || y > areaHeight - buttonHeight) {
                         console.error('Invalid fallback position calculated:', {x: x, y: y});
                         // Force to safe default position based on handedness
+                        // Use known screen dimensions if areaWidth/areaHeight not available
+                        var safeWidth = areaWidth || 393;
+                        var safeHeight = areaHeight || 852;
+                        
                         if (handedness === 'right') {
                             x = 50;  // Left side for right-handed
                             y = 200;
                         } else {
-                            x = areaWidth - buttonWidth - 50;  // Right side for left-handed
+                            x = safeWidth - buttonWidth - 50;  // Right side for left-handed
                             y = 200;
                         }
                         console.log('Using emergency safe position:', {x: x, y: y});
@@ -1845,6 +1870,10 @@
             searchBtn.style.opacity = '1';  // Force opacity
             searchBtn.style.zIndex = '50000';  // Force z-index
             searchBtn.style.position = 'absolute';  // Ensure positioned
+            
+            // Get area dimensions for validation
+            var areaWidth = area.clientWidth || window.innerWidth;
+            var areaHeight = area.clientHeight || window.innerHeight;
             
             // Position search button based on condition
             var buttonPosition = generateSearchButtonPosition(currentCondition);
