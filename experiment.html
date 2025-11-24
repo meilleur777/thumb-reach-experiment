@@ -1251,23 +1251,31 @@
                 };
             }
             
-            // Find the farthest reachable point from the circle center
-            var maxDistance = 0;
-            var farthestPoint = null;
-            
+            // Calculate all distances and sort
+            var distances = [];
             for (var i = 0; i < reachable.length; i++) {
                 var point = reachable[i];
                 var distance = Math.sqrt(
                     Math.pow(point.x - circleCenter.x, 2) + 
                     Math.pow(point.y - circleCenter.y, 2)
                 );
-                if (distance > maxDistance) {
-                    maxDistance = distance;
-                    farthestPoint = point;
-                }
+                distances.push({
+                    distance: distance,
+                    point: point
+                });
             }
             
-            var radius = maxDistance;
+            distances.sort(function(a, b) { return a.distance - b.distance; });
+            
+            // Use 75th percentile as radius (comfortable reach)
+            var percentileIndex = Math.floor(distances.length * 0.75);
+            var radius = distances[percentileIndex].distance;
+            var radiusPoint = distances[percentileIndex].point;
+            
+            // Also track maximum for reference
+            var maxDistance = distances[distances.length - 1].distance;
+            var farthestPoint = distances[distances.length - 1].point;
+            
             var borderThreshold = radius * 0.25;
             
             // Store circle data
@@ -1277,12 +1285,15 @@
                 circleCenter: circleCenter,
                 circleCenterType: 'fixed-iphone16',
                 radius: radius,
+                radiusCalculationMethod: '75th percentile of calibration distances',
+                radiusPoint: radiusPoint,
+                maxDistance: maxDistance,
+                farthestPoint: farthestPoint,
                 borderThreshold: borderThreshold,
                 borderRange: {
                     min: radius - borderThreshold,
                     max: radius
                 },
-                farthestPoint: farthestPoint,
                 angleRange: handedness === 'right' ? '180-270° (9-12 o\'clock)' : '270-360° (12-3 o\'clock)',
                 angleRangeDegrees: handedness === 'right' ? {min: 180, max: 270} : {min: 270, max: 360}
             };
@@ -1457,9 +1468,9 @@
                 }
                 
                 // Step 2: Calculate radius from calibration data
-                // Find the farthest reachable point from the circle center
-                var maxDistance = 0;
-                var farthestPoint = null;
+                // Use AVERAGE distance of border points instead of maximum
+                // This represents comfortable reach better than the absolute farthest point
+                var distances = [];
                 
                 for (var i = 0; i < reachable.length; i++) {
                     var point = reachable[i];
@@ -1467,13 +1478,23 @@
                         Math.pow(point.x - circleCenter.x, 2) + 
                         Math.pow(point.y - circleCenter.y, 2)
                     );
-                    if (distance > maxDistance) {
-                        maxDistance = distance;
-                        farthestPoint = point;
-                    }
+                    distances.push({
+                        distance: distance,
+                        point: point
+                    });
                 }
                 
-                var radius = maxDistance;
+                // Sort by distance
+                distances.sort(function(a, b) { return a.distance - b.distance; });
+                
+                // Use 75th percentile distance as radius (comfortable reach, not extreme)
+                var percentileIndex = Math.floor(distances.length * 0.75);
+                var radius = distances[percentileIndex].distance;
+                var radiusPoint = distances[percentileIndex].point;
+                
+                // Also track the maximum for reference
+                var maxDistance = distances[distances.length - 1].distance;
+                var farthestPoint = distances[distances.length - 1].point;
                 
                 // Step 3: Filter calibration points that are on or near the circle border
                 // Define "border" as points within a certain threshold of the radius
@@ -1560,6 +1581,8 @@
                             handedness: handedness,
                             circleCenter: circleCenter,
                             radius: radius,
+                            radiusPoint: radiusPoint,
+                            maxDistance: maxDistance,
                             farthestPoint: farthestPoint,
                             borderThreshold: borderThreshold,
                             calculatedBorderPoint: {x: borderX, y: borderY},
@@ -1672,6 +1695,9 @@
                         handedness: handedness,
                         circleCenter: circleCenter,
                         radius: radius,
+                        radiusCalculationMethod: '75th percentile',
+                        radiusPoint: radiusPoint,
+                        maxDistance: maxDistance,
                         farthestPoint: farthestPoint,
                         borderThreshold: borderThreshold,
                         minBorderDistance: minBorderDistance,
