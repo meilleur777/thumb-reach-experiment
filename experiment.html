@@ -1226,7 +1226,7 @@
                 return;
             }
             
-            // Calculate centroid of reachable points
+            // Calculate centroid of reachable points (for reference only)
             var sumX = 0, sumY = 0;
             for (var i = 0; i < reachable.length; i++) {
                 sumX += reachable[i].x;
@@ -1235,21 +1235,19 @@
             var centroidX = sumX / reachable.length;
             var centroidY = sumY / reachable.length;
             
-            // Get viewport dimensions
-            var areaWidth = window.innerWidth;
-            var areaHeight = window.innerHeight;
-            
-            // Determine circle center based on handedness
+            // FIXED circle center for iPhone 16
             var circleCenter;
             if (handedness === 'right') {
+                // Right-handed: bottom-right position
                 circleCenter = {
-                    x: Math.max(centroidX, areaWidth * 0.6),
-                    y: Math.max(centroidY, areaHeight * 0.6)
+                    x: 320,  // Near right edge
+                    y: 750   // Near bottom
                 };
             } else {
+                // Left-handed: bottom-left position
                 circleCenter = {
-                    x: Math.min(centroidX, areaWidth * 0.4),
-                    y: Math.max(centroidY, areaHeight * 0.6)
+                    x: 73,   // Near left edge
+                    y: 750   // Near bottom
                 };
             }
             
@@ -1277,6 +1275,7 @@
                 handedness: handedness,
                 centroid: {x: centroidX, y: centroidY},
                 circleCenter: circleCenter,
+                circleCenterType: 'fixed-iphone16',
                 radius: radius,
                 borderThreshold: borderThreshold,
                 borderRange: {
@@ -1437,31 +1436,23 @@
                 var reachable = participantData.reachableZone;
                 var handedness = participantData.handedness;
                 
-                // Step 1: Determine circle center based on handedness
-                // Position center in the MIDDLE of the reachable area, but biased toward hand side
-                // This ensures the circle border spans the full thumb reach area
+                // Step 1: Determine FIXED circle center for iPhone 16
+                // iPhone 16 dimensions: 393px width × ~852px height
+                // Fixed positions optimized for thumb reach
                 var circleCenter;
-                
-                // Calculate the centroid of reachable points for better positioning
-                var sumX = 0, sumY = 0;
-                for (var i = 0; i < reachable.length; i++) {
-                    sumX += reachable[i].x;
-                    sumY += reachable[i].y;
-                }
-                var centroidX = sumX / reachable.length;
-                var centroidY = sumY / reachable.length;
-                
                 if (handedness === 'right') {
-                    // For right-handed users, center slightly to the right and lower
+                    // For right-handed: center at bottom-right
+                    // This makes the left side (180-270°) the farthest reach
                     circleCenter = {
-                        x: Math.max(centroidX, areaWidth * 0.6),  // At least 60% to the right
-                        y: Math.max(centroidY, areaHeight * 0.6)  // At least 60% down
+                        x: 320,  // Near right edge (393 - 73)
+                        y: 750   // Near bottom
                     };
                 } else {
-                    // For left-handed users, center slightly to the left and lower
+                    // For left-handed: center at bottom-left
+                    // This makes the right side (270-360°) the farthest reach
                     circleCenter = {
-                        x: Math.min(centroidX, areaWidth * 0.4),  // At most 40% to the right
-                        y: Math.max(centroidY, areaHeight * 0.6)  // At least 60% down
+                        x: 73,   // Near left edge
+                        y: 750   // Near bottom
                     };
                 }
                 
