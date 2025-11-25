@@ -1452,16 +1452,31 @@
                     details: null
                 };
             } else if (condition === 'bottom-right') {
-                // Bottom-right position: Fixed at bottom-right corner
-                var x = areaWidth - buttonWidth - 10; // 10px from right
+                // Bottom-right condition: Randomize X position, fixed Y at bottom
+                // Y position: Fixed at bottom (same as before)
                 var y = areaHeight - buttonHeight - 50; // 50px from bottom (above keyboard area)
+                
+                // X position: Randomize across ENTIRE screen width (0% to 100%)
+                var minX = 10;  // 10px from left edge (margin)
+                var maxX = areaWidth - buttonWidth - 10;  // 10px from right edge (margin)
+                
+                // Random X within full range
+                var x = minX + Math.random() * (maxX - minX);
                 
                 return {
                     x: x, 
                     y: y, 
-                    zone: 'bottom-right-fixed',
-                    generationMethod: 'fixed-bottom-right',
-                    details: null
+                    zone: 'bottom-randomized',
+                    generationMethod: 'bottom-random-x-full-width',
+                    details: {
+                        areaWidth: areaWidth,
+                        areaHeight: areaHeight,
+                        minX: minX,
+                        maxX: maxX,
+                        fixedY: y,
+                        randomizedX: x,
+                        range: '0-100% screen width'
+                    }
                 };
             } else {
                 // Adaptive: Circle-based positioning using handedness
