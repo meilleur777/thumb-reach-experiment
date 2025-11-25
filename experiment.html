@@ -1132,117 +1132,140 @@
             var area = document.getElementById('test-area');
             area.innerHTML = '';
             
-            // Create search bar
-            var searchContainer = document.createElement('div');
-            searchContainer.className = 'search-container';
-            searchContainer.id = 'search-container-test';
-            searchContainer.style.left = '0px';
-            searchContainer.style.top = '0px';
+            // Track test trial state
+            var currentTestTrial = 0;
+            var totalTestTrials = 3;
             
-            var input = document.createElement('input');
-            input.className = 'search-input';
-            input.id = 'search-input-test';
-            input.type = 'text';
-            input.placeholder = '검색어를 입력하세요...';
-            input.maxLength = 999;
-            input.autocomplete = 'off';
-            input.autocorrect = 'off';
-            input.autocapitalize = 'off';
-            input.spellcheck = false;
-            input.style.caretColor = '#2563eb';
-            input.inputMode = 'text';
-            
-            searchContainer.appendChild(input);
-            area.appendChild(searchContainer);
-            
-            // Get test string (use first string from pool)
-            var testString = participantData.stringPool[0];
-            
-            // Display target string
-            var targetDisplay = document.createElement('div');
-            targetDisplay.className = 'target-text';
-            targetDisplay.textContent = testString;
-            area.appendChild(targetDisplay);
-            
-            // Create search button at TOP-RIGHT (fixed position)
-            var searchBtn = document.createElement('button');
-            searchBtn.className = 'search-btn';
-            searchBtn.textContent = '검색';
-            
-            var areaWidth = area.clientWidth;
-            var buttonWidth = 80;
-            searchBtn.style.left = (areaWidth - buttonWidth - 10) + 'px';
-            searchBtn.style.top = '5px';
-            
-            area.appendChild(searchBtn);
-            
-            var keyboardOpened = false;
-            
-            // Search button click handler
-            var openKeyboard = function(e) {
-                if (e) {
+            function startTestTrialIteration() {
+                area.innerHTML = ''; // Clear previous trial
+                
+                // Create search bar
+                var searchContainer = document.createElement('div');
+                searchContainer.className = 'search-container';
+                searchContainer.id = 'search-container-test';
+                searchContainer.style.left = '0px';
+                searchContainer.style.top = '0px';
+                
+                var input = document.createElement('input');
+                input.className = 'search-input';
+                input.id = 'search-input-test';
+                input.type = 'text';
+                input.placeholder = '검색어를 입력하세요...';
+                input.maxLength = 999;
+                input.autocomplete = 'off';
+                input.autocorrect = 'off';
+                input.autocapitalize = 'off';
+                input.spellcheck = false;
+                input.style.caretColor = '#2563eb';
+                input.inputMode = 'text';
+                
+                searchContainer.appendChild(input);
+                area.appendChild(searchContainer);
+                
+                // Get test string (use different strings for each trial)
+                var testString = participantData.stringPool[currentTestTrial];
+                
+                // Display target string with trial counter
+                var targetDisplay = document.createElement('div');
+                targetDisplay.className = 'target-text';
+                targetDisplay.innerHTML = testString + '<div style="font-size: 14px; margin-top: 8px; color: #6b7280;">연습 ' + (currentTestTrial + 1) + '/' + totalTestTrials + '</div>';
+                area.appendChild(targetDisplay);
+                
+                // Create search button at TOP-RIGHT (fixed position)
+                var searchBtn = document.createElement('button');
+                searchBtn.className = 'search-btn';
+                searchBtn.textContent = '검색';
+                
+                var areaWidth = area.clientWidth;
+                var buttonWidth = 80;
+                searchBtn.style.left = (areaWidth - buttonWidth - 10) + 'px';
+                searchBtn.style.top = '5px';
+                
+                area.appendChild(searchBtn);
+                
+                var keyboardOpened = false;
+                
+                // Search button click handler
+                var openKeyboard = function(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    
+                    if (!keyboardOpened) {
+                        keyboardOpened = true;
+                    }
+                    
+                    input.focus();
+                };
+                
+                searchBtn.addEventListener('click', openKeyboard, {passive: false});
+                
+                searchBtn.addEventListener('touchstart', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                }
+                }, {passive: false});
                 
-                if (!keyboardOpened) {
-                    keyboardOpened = true;
-                }
-                
-                input.focus();
-            };
-            
-            searchBtn.addEventListener('click', openKeyboard, {passive: false});
-            
-            searchBtn.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }, {passive: false});
-            
-            searchBtn.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                openKeyboard(e);
-            }, {passive: false});
-            
-            input.addEventListener('touchstart', function(e) {
-                if (!keyboardOpened) {
+                searchBtn.addEventListener('touchend', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    openKeyboard();
-                }
-            }, {passive: false});
+                    openKeyboard(e);
+                }, {passive: false});
+                
+                input.addEventListener('touchstart', function(e) {
+                    if (!keyboardOpened) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openKeyboard();
+                    }
+                }, {passive: false});
+                
+                // Handle Enter/Return key
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' || e.keyCode === 13) {
+                        e.preventDefault();
+                        finishTestTrialIteration();
+                    }
+                });
+                
+                var finishTestTrialIteration = function() {
+                    var userInput = input.value.toLowerCase();
+                    var isCorrect = userInput === testString.toLowerCase();
+                    
+                    // Visual feedback
+                    var searchContainer = document.getElementById('search-container-test');
+                    if (isCorrect) {
+                        searchContainer.style.borderColor = '#10b981';
+                        searchContainer.style.background = '#d1fae5';
+                    } else {
+                        searchContainer.style.borderColor = '#ef4444';
+                        searchContainer.style.background = '#fee2e2';
+                    }
+                    
+                    input.blur();
+                    
+                    // Move to next trial or finish
+                    currentTestTrial++;
+                    
+                    if (currentTestTrial < totalTestTrials) {
+                        // More test trials remaining
+                        setTimeout(function() {
+                            startTestTrialIteration();
+                        }, 800);
+                    } else {
+                        // All test trials complete
+                        setTimeout(function() {
+                            showAlert('연습 완료!', 'success');
+                            setTimeout(function() {
+                                showTestRestScreen();
+                            }, 500);
+                        }, 800);
+                    }
+                };
+            }
             
-            // Handle Enter/Return key
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' || e.keyCode === 13) {
-                    e.preventDefault();
-                    finishTestTrial();
-                }
-            });
-            
-            var finishTestTrial = function() {
-                var userInput = input.value.toLowerCase();
-                var isCorrect = userInput === testString.toLowerCase();
-                
-                // Visual feedback
-                var searchContainer = document.getElementById('search-container-test');
-                if (isCorrect) {
-                    searchContainer.style.borderColor = '#10b981';
-                    searchContainer.style.background = '#d1fae5';
-                    showAlert('연습 완료!', 'success');
-                } else {
-                    searchContainer.style.borderColor = '#ef4444';
-                    searchContainer.style.background = '#fee2e2';
-                    showAlert('연습 완료!', 'info');
-                }
-                
-                input.blur();
-                
-                setTimeout(function() {
-                    showTestRestScreen();
-                }, 1000);
-            };
+            // Start first test trial
+            startTestTrialIteration();
         }
         
         function startMainExperiment() {
